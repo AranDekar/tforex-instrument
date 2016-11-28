@@ -1,0 +1,225 @@
+swagger: "2.0"
+info:
+  version: "0.0.1"
+  title: Instruments Service
+# during dev, should point to your local machine
+host: localhost:10040
+# basePath prefixes all resource paths 
+basePath: /
+# 
+schemes:
+  # tip: remove http to make production-grade
+  - http
+  - https
+# format of bodies a client can send (Content-Type)
+consumes:
+  - application/json
+# format of the responses to the client (Accepts)
+produces:
+  - application/json
+  
+securityDefinitions:
+  api_key:
+    type: apiKey
+    in: header
+    name: api-key
+    
+paths:
+  /instruments:
+    x-swagger-router-controller: instrument.controller
+    get:
+      tags: 
+        - instrument
+      security:
+        - api_key: []
+      description: Returns a list of instruments
+      produces:
+        - application/json
+      operationId: getInstruments
+      parameters: 
+        - name: _id
+          in: query
+          description: The id of a specific instrument
+          required: false
+          type: string
+      responses:
+        "200":
+          description: A list of instruments
+          schema: 
+            type: array
+            items:
+              $ref: "#/definitions/Instrument"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /candles:
+    # binds a127 app logic to a route
+    x-swagger-router-controller: candle.controller
+    get:
+      tags: 
+        - candle
+      security:
+        - api_key: []
+      description: gets candles of an instrument by granularity and time
+      operationId: getCandles
+      parameters:
+        - name: instrument
+          description: the instrument of the candles
+          in: query
+          required: true
+          type: string
+          enum:
+            - AUD_USD
+        - name: granularity
+          description: the granularity in which the candles are fetched
+          type: string
+          in: query
+          enum:
+            - M5
+        - name: timeFrom
+          description: the start time for the candles
+          type: string
+          in: query
+          format: date-time
+          required: true
+        - name: timeTo
+          description: the end time for the candles
+          type: string
+          in: query
+          format: date-time
+          required: false
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Candle"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    post:
+      tags: 
+        - candle
+      security:
+        - api_key: []
+      description: syncs (creates) candles for the instrument in specified timeframe(granularity)
+      operationId: createCandles
+      parameters:
+        - name: createCandlesRequest
+          description: the instrument and granularity of the candles
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/CreateCanldesRequest"      
+      responses:
+        "200":
+          description: Success
+          schema:
+            # a pointer to a definition
+            $ref: "#/definitions/EventResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /swagger:
+    x-swagger-pipe: swagger_raw
+# complex objects have schema definitions
+definitions:
+  Instrument:
+    type: object
+    required:
+      - _id
+      - displayName
+      - halted
+      - title
+      - path
+      - marginRate
+      - maxTradeUnits
+      - maxTrailingStop
+      - minTrailingStop
+      - pip
+      - precision
+      - granularities
+    properties:
+      _id:
+        type: string
+      displayName:
+        type: string
+      halted:
+        type: boolean
+      title:
+        type: string
+      path:
+        type: string
+      marginRate:
+        type: number
+      maxTradeUnits:
+        type: number
+      maxTrailingStop:
+        type: number
+      minTrailingStop:
+        type: number
+      pip:
+        type: string
+      precision:
+        type: string
+      granularities:
+        type: array
+        items:
+          type: string
+  Candle:
+    type: object
+    properties:
+      closeAsk:
+        type: number
+      closeBid:
+        type: number
+      complete:
+        type: boolean
+      highAsk:
+        type: number
+      highBid:
+        type: number
+      lowAsk:
+        type: number
+      lowBid:
+        type: number
+      openAsk:
+        type: number
+      openBid:
+        type: number
+      time:
+        type: string
+      volume:
+        type: number    
+  CreateCanldesRequest:
+    type: object
+    required:
+      - instrument
+      - granularity
+    properties:
+      instrument:
+        type: string
+        description: the instrument of the candles
+        enum:
+          - AUD_USD
+      granularity:
+        type: string
+        description: the granularity of the candles
+        enum:
+          - M5
+  EventResponse:
+    required:
+      - message
+    properties:
+      message:
+        type: string
+  ErrorResponse:
+    required:
+      - message
+    properties:
+      message:
+        type: string
