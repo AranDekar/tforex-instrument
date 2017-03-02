@@ -18,7 +18,7 @@ export class Config {
                 api_key: '1234',
                 kafka_conn_string: 'localhost:2181/',
                 oanda_access_token_key: '77b8d34f242ab412698eba34bc577edb-9126983f28bbf9348c2e2f5697c9d1b3',
-                client_id: 'instrument',
+                candle_history_client_id: 'candle-history',
                 topic_m5: 'm5',
                 mockup_oanda: false,
                 oanda_account_number: 7841664,
@@ -40,7 +40,7 @@ interface AppSettings {
     api_key: string;
     kafka_conn_string: string;
     oanda_access_token_key: string;
-    client_id: string;
+    candle_history_client_id: string;
     topic_m5: string;
     mockup_oanda: boolean;
     oanda_account_number: string | number;

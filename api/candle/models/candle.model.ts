@@ -39,9 +39,17 @@ schema.index({ time: 1 }); // schema level ascending index on time
 
 
 export interface CandleModel extends Model<CandleDocument> {
+    getAllCandles(model: Model<CandleDocument>): Promise<CandleDocument[]>;
     findLastCandle(model: Model<CandleDocument>): Promise<CandleDocument>;
     findCandleByTime(model: Model<CandleDocument>, time: string): Promise<CandleDocument>;
 }
+
+schema.statics.getAllCandles = async (model: Model<CandleDocument>) => {
+    return model
+        .find()
+        .sort({ 'time': 1 })
+        .exec();
+};
 
 schema.statics.findLastCandle = async (model: Model<CandleDocument>) => {
     return model

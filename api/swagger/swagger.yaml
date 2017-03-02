@@ -82,7 +82,7 @@ paths:
           type: string
           in: query
           format: date-time
-          required: true
+          required: false
         - name: timeTo
           description: the end time for the candles
           type: string
@@ -124,6 +124,46 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
+  /candles/history:
+    # binds a127 app logic to a route
+    x-swagger-router-controller: candle-history.controller
+    get:
+      tags: 
+        - candle
+      security:
+        - api_key: []
+      description: to backtest a strategy publishes the candles into a message channel
+      operationId: getHistoryData
+      parameters:
+        - name: instrument
+          description: the instrument of the candles
+          in: query
+          required: true
+          type: string
+          enum:
+            - AUD_USD
+        - name: granularity
+          description: the granularity in which the candles are fetched
+          type: string
+          in: query
+          required: true
+          enum:
+            - M5
+        - name: topic
+          description: the topic to be used for messages
+          type: string
+          required: true
+          in: query
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/EventResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
   /swagger:
     x-swagger-pipe: swagger_raw
 # complex objects have schema definitions
@@ -220,6 +260,9 @@ definitions:
   ErrorResponse:
     required:
       - message
+      - code
     properties:
       message:
+        type: string
+      code:
         type: string
