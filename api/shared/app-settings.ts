@@ -15,11 +15,12 @@ export class Config {
                 gateway_base_path: 'http://localhost:10020',
                 strategy_base_path: 'http://localhost:10010',
                 ui_base_path: 'http://localhost:8080',
-                mongo_db_connection_string: `mongodb://tforex-user:tforex-password
-                @cluster0-shard-00-00-tyqk3.mongodb.net:27017,cluster0-shard-00-01-tyqk3.mongodb.net:27017,
-                cluster0-shard-00-02-tyqk3.mongodb.net:27017/tforex?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin`,
+                mongo_db_connection_string: `mongodb://tforex-user:tforex-password@cluster0-shard-00-00-tyqk3.mongodb.net:27017,` +
+                `cluster0-shard-00-01-tyqk3.mongodb.net:27017,cluster0-shard-00-02-tyqk3.mongodb.net:27017/tforex?` +
+                `ssl=true&replicaSet=Cluster0-shard-0&authSource=admin`,
                 api_key: '1234',
-                kafka_conn_string: 'localhost:2181/',
+                kafka_conn_string: '34.200.255.114:2181',
+                client_id: 'instrument',
                 oanda_access_token_key: '77b8d34f242ab412698eba34bc577edb-9126983f28bbf9348c2e2f5697c9d1b3',
                 candle_history_client_id: 'candle-history',
                 topic_m5: 'm5',
@@ -43,6 +44,7 @@ interface AppSettings {
     api_key: string;
     mongo_db_connection_string: string;
     kafka_conn_string: string;
+    client_id: string;
     oanda_access_token_key: string;
     candle_history_client_id: string;
     topic_m5: string;

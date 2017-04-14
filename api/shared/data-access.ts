@@ -16,7 +16,7 @@ export class DataAccess {
         this.mongooseInstance.connection.once("open", () => {
             console.log("Conected to mongodb.");
         });
-        this.mongooseInstance.connect(api.Config.settings.oanda_access_token_key);
+        this.mongooseInstance.connect(api.Config.settings.mongo_db_connection_string);
         return this.mongooseInstance;
     }
 

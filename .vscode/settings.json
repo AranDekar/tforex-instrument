@@ -14,5 +14,6 @@
         },
         "search.exclude": {
             "**/js": true
-        }        
+        },
+        "vsicons.presets.angular": false
     }
