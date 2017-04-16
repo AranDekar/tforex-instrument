@@ -16,3 +16,13 @@ export async function getInstruments(req, res, next) {
         next(err);
     }
 }
+export async function importInstruments(req, res, next) {
+    try {
+        let service = new api.InstrumentService();
+        await service.sync();
+        res.status(200).send({ message: 'imported successfully' });
+    } catch (err) {
+        res.statusCode = 500; // bad server
+        next(err);
+    }
+}

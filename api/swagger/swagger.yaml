@@ -53,6 +53,27 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
+  /instruments/import:
+    x-swagger-router-controller: instrument.controller
+    get:
+      tags: 
+        - instrument
+      security:
+        - api_key: []
+      description: Returns a list of instruments
+      produces:
+        - application/json
+      operationId: importInstruments
+      responses:
+        "200":
+          description: Success
+          schema:
+            # a pointer to a definition
+            $ref: "#/definitions/EventResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
   /candles:
     # binds a127 app logic to a route
     x-swagger-router-controller: candle.controller
@@ -100,13 +121,16 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
+  /candles/import:
+    # binds a127 app logic to a route
+    x-swagger-router-controller: candle.controller
     post:
       tags: 
         - candle
       security:
         - api_key: []
       description: syncs (creates) candles for the instrument in specified timeframe(granularity)
-      operationId: createCandles
+      operationId: importCandles
       parameters:
         - name: createCandlesRequest
           description: the instrument and granularity of the candles

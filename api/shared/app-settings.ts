@@ -15,9 +15,10 @@ export class Config {
                 gateway_base_path: 'http://localhost:10020',
                 strategy_base_path: 'http://localhost:10010',
                 ui_base_path: 'http://localhost:8080',
-                mongo_db_connection_string: `mongodb://tforex-user:tforex-password@cluster0-shard-00-00-tyqk3.mongodb.net:27017,` +
-                `cluster0-shard-00-01-tyqk3.mongodb.net:27017,cluster0-shard-00-02-tyqk3.mongodb.net:27017/tforex?` +
-                `ssl=true&replicaSet=Cluster0-shard-0&authSource=admin`,
+                // mongo_db_connection_string: `mongodb://tforex-user:tforex-password@cluster0-shard-00-00-tyqk3.mongodb.net:27017,` +
+                // `cluster0-shard-00-01-tyqk3.mongodb.net:27017,cluster0-shard-00-02-tyqk3.mongodb.net:27017/tforex?` +
+                // `ssl=true&replicaSet=Cluster0-shard-0&authSource=admin`,
+                mongo_db_connection_string: `mongodb://localhost:27017/tforex`,
                 api_key: '1234',
                 kafka_conn_string: '34.200.255.114:2181',
                 client_id: 'instrument',

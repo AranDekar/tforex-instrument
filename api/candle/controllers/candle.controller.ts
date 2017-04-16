@@ -37,7 +37,7 @@ export async function getCandles(req, res, next) {
     }
 }
 
-export async function createCandles(req, res, next) {
+export async function importCandles(req, res, next) {
     let body = req.body;
     if (!body) {
         throw new Error('body is undefined');
@@ -57,7 +57,7 @@ export async function createCandles(req, res, next) {
 
         await service.sync();
 
-        res.json('candles are being synced');
+        res.json({ message: 'candles are being synced' });
     } catch (err) {
         res.statusCode = 500; // internal server error
         next(err);
