@@ -4,26 +4,18 @@ import * as shared from '../../shared';
 
 export async function getCandles(req, res, next) {
     try {
-        let result: api.Candle[] = [];
+        let result: api.Model.Candle[] = [];
         let instrument: string | undefined;
         let granularity: shared.GranularityEnum | undefined;
         let timeFrom: Date | undefined;
         let timeTo: Date | undefined;
 
-        if (req.swagger.params && req.swagger.params.instrument) {
-            instrument = req.swagger.params.instrument.value;
-        }
-        if (req.swagger.params && req.swagger.params.granularity) {
-            granularity = req.swagger.params.granularity.value;
-        }
-        if (req.swagger.params && req.swagger.params.timeFrom) {
-            timeFrom = req.swagger.params.timeFrom.value;
-        }
-        if (req.swagger.params && req.swagger.params.timeTo) {
-            timeTo = req.swagger.params.timeTo.value;
-        }
+        instrument = req.swagger.params.instrument.value;
+        granularity = req.swagger.params.granularity.value;
+        timeFrom = req.swagger.params.timeFrom.value;
+        timeTo = req.swagger.params.timeTo.value;
 
-        let service = new api.CandleService();
+        let service = new api.Service.CandleService();
 
         if (!instrument || !granularity || !timeFrom) {
             throw new Error('arguments are not supplied!');
@@ -51,7 +43,7 @@ export async function importCandles(req, res, next) {
             await instrumentItem.save();
         }
 
-        let service = new api.CandleSyncService();
+        let service = new api.Service.CandleSyncService();
         service.instrument = body.instrument;
         service.granularity = body.granularity;
 

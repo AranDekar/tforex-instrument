@@ -6,7 +6,7 @@ import * as shared from '../../shared';
 export class CandleService {
 
     public async get(instrument: string, granularity: shared.GranularityEnum, timeFrom: Date, timeTo: Date | undefined):
-        Promise<api.CandleDocument[]> {
+        Promise<api.Model.CandleDocument[]> {
         let candleModel = this.getModel(shared.InstrumentEnum[instrument], granularity);
         if (!candleModel) {
             throw new Error('cannot get the candle model!');
@@ -19,7 +19,7 @@ export class CandleService {
         if (!candleModel) {
             throw new Error('candle model in undefined in CandleService!');
         }
-        let lastCandle: api.Candle = await candleModel.findLastCandle(candleModel);
+        let lastCandle: api.Model.Candle = await candleModel.findLastCandle(candleModel);
         if (!lastCandle) {
             throw new Error('there is no candle to publish please first sync the candles!');
         }
@@ -33,7 +33,7 @@ export class CandleService {
         if (allCandles.length > 100) {
             allCandles = allCandles.slice(0, 3);
         }
-        let producer = new api.CandleHistoryMessageProducerService();
+        let producer = new api.Proxy.CandleProducerProxy();
         producer.ProduceHistoryData(topic, allCandles);
     }
 
@@ -72,12 +72,12 @@ export class CandleService {
         }
     }
 
-    public getModel(instrument: shared.InstrumentEnum, granularity: shared.GranularityEnum): api.CandleModel | undefined {
+    public getModel(instrument: shared.InstrumentEnum, granularity: shared.GranularityEnum): api.Model.CandleModel | undefined {
         switch (instrument) {
             case shared.InstrumentEnum.AUD_USD:
                 switch (granularity) {
                     case shared.GranularityEnum.M5:
-                        return api.candles.audUsdM5;
+                        return api.Model.candles.audUsdM5;
                 }
                 break;
         }

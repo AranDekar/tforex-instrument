@@ -1,8 +1,6 @@
-export * from './models/candle.model';
+import * as Service from './services';
+import * as Model from './models/candle.model';
+import * as Proxy from './proxies/kafka/candle-producer.proxy';
+import * as Controller from './controllers';
 
-export * from './services/candle.service';
-export * from './services/candle-sync.service';
-export * from './services/candle-history-message-producer.service';
-
-export * from './controllers/candle.controller';
-export * from './controllers/candle-history.controller';
+export { Service, Model, Proxy, Controller }

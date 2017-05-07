@@ -1,12 +1,13 @@
 import * as mongoose from 'mongoose';
 import * as kafka from 'kafka-node';
 
-import * as api from '../../../api';
+import * as api from '../../../../api';
 
-export class CandleHistoryMessageProducerService {
+
+export class CandleProducerProxy {
     private _producer: kafka.Producer;
 
-    public async ProduceHistoryData(topic: string, candles: api.Candle[]): Promise<void> {
+    public async ProduceHistoryData(topic: string, candles: api.Model.Candle[]): Promise<void> {
         let client = new kafka.Client(
             api.Config.settings.kafka_conn_string,
             api.Config.settings.candle_history_client_id);
