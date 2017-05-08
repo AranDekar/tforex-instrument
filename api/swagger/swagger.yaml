@@ -150,7 +150,7 @@ paths:
             $ref: "#/definitions/ErrorResponse"
   /candles/history:
     # binds a127 app logic to a route
-    x-swagger-router-controller: candle-history.controller
+    x-swagger-router-controller: candle.controller
     get:
       tags: 
         - candle
