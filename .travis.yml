@@ -1,0 +1,27 @@
+sudo: required
+language: node_js
+node_js:
+  - node
+services:
+  - docker
+env:
+  - test=test
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      sudo: required
+      node_js: node
+      env: test=test
+cache:
+  directories:
+    - "node_modules"
+install:
+  
+before_script: 
+script: 
+  - chmod +x ./deploy-envs.sh
+  - chmod +x ./scripts/build.sh
+  - chmod +x ./scripts/deploy.sh
+  - cd scripts && ./build.sh
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then ./deploy.sh; fi
