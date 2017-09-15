@@ -11,13 +11,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const api = require("../../candle");
 const shared = require("../../shared");
 class CandleService {
-    get(instrument, granularity, timeFrom, timeTo) {
+    get(instrument, granularity) {
         return __awaiter(this, void 0, void 0, function* () {
             let candleModel = this.getModel(shared.InstrumentEnum[instrument], granularity);
             if (!candleModel) {
                 throw new Error('cannot get the candle model!');
             }
-            return yield candleModel.find({ instrument: instrument }).exec();
+            return yield candleModel.findLastCandle(candleModel);
         });
     }
     getHistoryData(topic, instrument, granularity) {
@@ -38,7 +38,7 @@ class CandleService {
             if (allCandles.length > 100) {
                 allCandles = allCandles.slice(0, 3);
             }
-            let producer = new api.Proxy.CandleProducerProxy();
+            let producer = new api.proxies.CandleProducerProxy();
             producer.ProduceHistoryData(topic, allCandles);
         });
     }
@@ -76,7 +76,7 @@ class CandleService {
             case shared.InstrumentEnum.AUD_USD:
                 switch (granularity) {
                     case shared.GranularityEnum.M5:
-                        return api.Model.candles.audUsdM5;
+                        return api.models.candles.audUsdM5;
                 }
                 break;
         }

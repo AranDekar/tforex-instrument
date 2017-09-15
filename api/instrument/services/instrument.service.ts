@@ -5,15 +5,13 @@ import * as shared from '../../shared';
 import * as candle from '../../candle';
 
 export class InstrumentService {
-    public async get(id: string | undefined = undefined): Promise<api.InstrumentDocument[]> {
-        if (id) {
-            return await api.instrumentModel.find({ id: id }).exec();
+    public async get(title: shared.InstrumentEnum | undefined = undefined): Promise<api.models.InstrumentDocument[]> {
+        if (title) {
+            let t = await api.models.instrumentModel.find({ title: title }).exec();
+            return t;
         } else {
-            return await api.instrumentModel.find().exec();
+            return await api.models.instrumentModel.find().exec();
         }
-    }
-    public async getByTitle(title: shared.InstrumentEnum): Promise<api.InstrumentDocument> {
-        return await api.instrumentModel.findOne({ title: title }).exec();
     }
 
     public async sync() {
@@ -22,7 +20,7 @@ export class InstrumentService {
         let localInstruments = await this.get();
 
         for (let instrument of instruments) {
-            let mappedInstrument: api.Instrument = instrument;
+            let mappedInstrument: api.models.Instrument = instrument;
             mappedInstrument.title = instrument.instrument;
 
             let localInstrument = localInstruments.find(x => x.title === mappedInstrument.title);
@@ -40,7 +38,7 @@ export class InstrumentService {
                 localInstrument.path = mappedInstrument.path;
                 await localInstrument.save();
             } else {
-                let model = new api.instrumentModel(mappedInstrument);
+                let model = new api.models.instrumentModel(mappedInstrument);
                 await model.save();
             }
         }
@@ -49,8 +47,8 @@ export class InstrumentService {
             await this.syncCandles(localInstrument);
         }
     }
-    private async syncCandles(instrument: api.InstrumentDocument) {
-        let candleService = new candle.CandleSyncService();
+    private async syncCandles(instrument: api.models.InstrumentDocument) {
+        let candleService = new candle.services.CandleSyncService();
         for (let granularity of instrument.granularities) {
             candleService.instrument = shared.InstrumentEnum[instrument.title];
             candleService.granularity = shared.GranularityEnum[granularity];

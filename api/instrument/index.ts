@@ -1,7 +1,7 @@
-export * from './models/instrument.model';
+import * as models from './models/instrument.model';
 
-export * from './controllers/instrument.controller';
+import * as controllers from './controllers/instrument.controller';
 
-export * from './services/instrument.service';
+import * as services from './services';
 
-export * from './services/startup.service'
+export { models, controllers, services }

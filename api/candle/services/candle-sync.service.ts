@@ -11,13 +11,13 @@ export class CandleSyncService {
     private endTime: string;
     public async sync() {
         let service = new shared.OandaService();
-        let candleService = new api.Service.CandleService();
+        let candleService = new api.services.CandleService();
         let candleModel = candleService.getModel(this.instrument, this.granularity);
         if (!candleModel) {
             throw new Error('candle model in undefined in CandleService!');
         }
 
-        let lastCandle: api.Model.Candle = await candleModel.findLastCandle(candleModel);
+        let lastCandle: api.models.Candle = await candleModel.findLastCandle(candleModel);
 
         if (lastCandle) {
             this.endTime = new Date(Number(lastCandle.time)).toISOString();

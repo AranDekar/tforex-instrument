@@ -9,11 +9,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const kafka = require("kafka-node");
-const api = require("../../../../api");
+const shared = require("../../../shared");
 class CandleProducerProxy {
     ProduceHistoryData(topic, candles) {
         return __awaiter(this, void 0, void 0, function* () {
-            let client = new kafka.Client(api.Config.settings.kafka_conn_string, api.Config.settings.candle_history_client_id);
+            let client = new kafka.Client(shared.Config.settings.kafka_conn_string, shared.Config.settings.candle_history_client_id);
             this._producer = new kafka.Producer(client);
             this._producer.on('ready', () => {
                 for (let item of candles) {

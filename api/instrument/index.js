@@ -1,11 +1,10 @@
 "use strict";
-function __export(m) {
-    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
-}
 Object.defineProperty(exports, "__esModule", { value: true });
-__export(require("./models/instrument.model"));
-__export(require("./controllers/instrument.controller"));
-__export(require("./services/instrument.service"));
-__export(require("./services/startup.service"));
+const models = require("./models/instrument.model");
+exports.models = models;
+const controllers = require("./controllers/instrument.controller");
+exports.controllers = controllers;
+const services = require("./services");
+exports.services = services;
 
 //# sourceMappingURL=index.js.map

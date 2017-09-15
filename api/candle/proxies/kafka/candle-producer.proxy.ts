@@ -1,16 +1,17 @@
 import * as mongoose from 'mongoose';
 import * as kafka from 'kafka-node';
 
-import * as api from '../../../../api';
+import * as candleApi from '../../../candle';
+import * as shared from '../../../shared';
 
 
 export class CandleProducerProxy {
     private _producer: kafka.Producer;
 
-    public async ProduceHistoryData(topic: string, candles: api.Model.Candle[]): Promise<void> {
+    public async ProduceHistoryData(topic: string, candles: candleApi.models.Candle[]): Promise<void> {
         let client = new kafka.Client(
-            api.Config.settings.kafka_conn_string,
-            api.Config.settings.candle_history_client_id);
+            shared.Config.settings.kafka_conn_string,
+            shared.Config.settings.candle_history_client_id);
 
         this._producer = new kafka.Producer(client);
 

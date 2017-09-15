@@ -9,25 +9,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const api = require("../../candle");
-const instrument = require("../../instrument");
 function getCandles(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            let result = [];
+            let result;
             let instrument;
             let granularity;
-            let timeFrom;
-            let timeTo;
             instrument = req.swagger.params.instrument.value;
             granularity = req.swagger.params.granularity.value;
-            timeFrom = req.swagger.params.timeFrom.value;
-            timeTo = req.swagger.params.timeTo.value;
-            let service = new api.Service.CandleService();
-            if (!instrument || !granularity || !timeFrom) {
-                throw new Error('arguments are not supplied!');
+            let service = new api.services.CandleService();
+            let data = yield service.get(instrument, granularity);
+            if (data) {
+                res.status(200).json(data);
             }
-            let data = yield service.get(instrument, granularity, timeFrom, timeTo);
-            res.json(data);
+            else {
+                res.statusCode = 404;
+                next(new Error('Not found'));
+            }
         }
         catch (err) {
             res.statusCode = 500; // bad server
@@ -36,32 +34,6 @@ function getCandles(req, res, next) {
     });
 }
 exports.getCandles = getCandles;
-function importCandles(req, res, next) {
-    return __awaiter(this, void 0, void 0, function* () {
-        let body = req.body;
-        if (!body) {
-            throw new Error('body is undefined');
-        }
-        try {
-            let instrumentService = new instrument.InstrumentService();
-            let instrumentItem = yield instrumentService.getByTitle(body.instrument);
-            if (instrumentItem.granularities.indexOf(body.granularity) === -1) {
-                instrumentItem.granularities.push(body.granularity);
-                yield instrumentItem.save();
-            }
-            let service = new api.Service.CandleSyncService();
-            service.instrument = body.instrument;
-            service.granularity = body.granularity;
-            yield service.sync();
-            res.json({ message: 'candles are being synced' });
-        }
-        catch (err) {
-            res.statusCode = 500; // internal server error
-            next(err);
-        }
-    });
-}
-exports.importCandles = importCandles;
 function getHistoryData(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -71,7 +43,7 @@ function getHistoryData(req, res, next) {
             topic = req.swagger.params.topic.value;
             instrument = req.swagger.params.instrument.value;
             granularity = req.swagger.params.granularity.value;
-            let service = new api.Service.CandleService();
+            let service = new api.services.CandleService();
             yield service.getHistoryData(topic, instrument, granularity);
             res.status(200).json({ message: 'candles are being published' });
         }

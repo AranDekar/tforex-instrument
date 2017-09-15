@@ -19,7 +19,7 @@ export interface Instrument {
     path: string | null;
 }
 
-export interface InstrumentDocument extends api.Instrument, Document {
+export interface InstrumentDocument extends api.models.Instrument, Document {
 }
 
 let schema = new Schema({

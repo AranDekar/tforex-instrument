@@ -3,7 +3,7 @@
 var SwaggerExpress = require('swagger-express-mw');
 var app = require('express')();
 let cors = require('cors');
-var api = require('./api');
+var shared = require('./api/shared');
 
 module.exports = app; // for testing
 
@@ -19,7 +19,7 @@ var config = {
             console.log('in apiKeySecurity (req: ' + JSON.stringify(req.headers) + ', def: ' + JSON.stringify(authOrSecDef) + ', scopes: ' + scopesOrApiKey + ')');
 
             // your security code
-            if (api.Config.settings.api_key === scopesOrApiKey) {
+            if (shared.Config.settings.api_key === scopesOrApiKey) {
                 cb();
             } else {
                 cb(new Error('access denied!'));
@@ -54,14 +54,14 @@ SwaggerExpress.create(config, function (err, swaggerExpress) {
 
     var port = process.env.PORT || 10040;
 
-    /*  app.use(function (req, res, next) {
-        next();
-      });
-    */
+    // app.use(function (req, res, next) {
+    //     next();
+    // });
+
 
     app.listen(port);
 
-    if (swaggerExpress.runner.swagger.paths['/hello']) {
-        console.log('try this:\ncurl http://127.0.0.1:' + port + '/hello?name=Scott');
+    if (swaggerExpress.runner.swagger.paths['/instrument']) {
+        console.log('try this:\ncurl http://127.0.0.1:' + port + '/instrument');
     }
 });

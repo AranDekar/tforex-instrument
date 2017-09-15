@@ -18,7 +18,7 @@ export interface Candle {
     time: string;
     volume: number;
 }
-export interface CandleDocument extends api.Model.Candle, Document {
+export interface CandleDocument extends api.models.Candle, Document {
 }
 
 let schema = new Schema({

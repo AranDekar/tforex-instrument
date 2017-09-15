@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __export(require("./app-settings"));
 __export(require("./data-access"));
 __export(require("./oanda.service"));
+__export(require("./proxies"));
 __export(require("./enums/instrument.enum"));
 __export(require("./enums/granularity.enum"));
 

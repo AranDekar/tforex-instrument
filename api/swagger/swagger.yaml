@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
   version: "0.0.1"
-  title: Instruments Service
+  title: Instrument
 # during dev, should point to your local machine
 host: localhost:10040
 # basePath prefixes all resource paths 
@@ -24,24 +24,37 @@ securityDefinitions:
     in: header
     name: api-key
     
+tags:
+- name: instrument
+  description: Everything about instruments
+  externalDocs:
+    description: Find out more
+    url: http://swagger.io
+- name: candle
+  description: Everything about candles
+
+
+    
 paths:
-  /instruments:
+  /instrument:
     x-swagger-router-controller: instrument.controller
     get:
       tags: 
         - instrument
       security:
         - api_key: []
-      description: Returns a list of instruments
+      description: Returns a list of instruments or a single one if provided the title
       produces:
         - application/json
       operationId: getInstruments
       parameters: 
-        - name: _id
+        - name: title
           in: query
-          description: The id of a specific instrument
+          description: The title of a specific instrument
           required: false
           type: string
+          enum:
+            - AUD_USD
       responses:
         "200":
           description: A list of instruments
@@ -53,28 +66,7 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
-  /instruments/import:
-    x-swagger-router-controller: instrument.controller
-    get:
-      tags: 
-        - instrument
-      security:
-        - api_key: []
-      description: Returns a list of instruments
-      produces:
-        - application/json
-      operationId: importInstruments
-      responses:
-        "200":
-          description: Success
-          schema:
-            # a pointer to a definition
-            $ref: "#/definitions/EventResponse"
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-  /candles:
+  /candle:
     # binds a127 app logic to a route
     x-swagger-router-controller: candle.controller
     get:
@@ -82,7 +74,7 @@ paths:
         - candle
       security:
         - api_key: []
-      description: gets candles of an instrument by granularity and time
+      description: gets the LAST candle of an instrument by granularity
       operationId: getCandles
       parameters:
         - name: instrument
@@ -98,18 +90,7 @@ paths:
           in: query
           enum:
             - M5
-        - name: timeFrom
-          description: the start time for the candles
-          type: string
-          in: query
-          format: date-time
-          required: false
-        - name: timeTo
-          description: the end time for the candles
-          type: string
-          in: query
-          format: date-time
-          required: false
+          required: true
       responses:
         "200":
           description: Success
@@ -121,34 +102,8 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
-  /candles/import:
-    # binds a127 app logic to a route
-    x-swagger-router-controller: candle.controller
-    post:
-      tags: 
-        - candle
-      security:
-        - api_key: []
-      description: syncs (creates) candles for the instrument in specified timeframe(granularity)
-      operationId: importCandles
-      parameters:
-        - name: createCandlesRequest
-          description: the instrument and granularity of the candles
-          in: body
-          required: true
-          schema:
-            $ref: "#/definitions/CreateCanldesRequest"      
-      responses:
-        "200":
-          description: Success
-          schema:
-            # a pointer to a definition
-            $ref: "#/definitions/EventResponse"
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-  /candles/history:
+
+  /candle/history:
     # binds a127 app logic to a route
     x-swagger-router-controller: candle.controller
     get:
@@ -259,22 +214,6 @@ definitions:
         type: string
       volume:
         type: number    
-  CreateCanldesRequest:
-    type: object
-    required:
-      - instrument
-      - granularity
-    properties:
-      instrument:
-        type: string
-        description: the instrument of the candles
-        enum:
-          - AUD_USD
-      granularity:
-        type: string
-        description: the granularity of the candles
-        enum:
-          - M5
   EventResponse:
     required:
       - message

@@ -12,19 +12,15 @@ const api = require("../../instrument");
 const shared = require("../../shared");
 const candle = require("../../candle");
 class InstrumentService {
-    get(id = undefined) {
+    get(title = undefined) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (id) {
-                return yield api.instrumentModel.find({ id: id }).exec();
+            if (title) {
+                let t = yield api.models.instrumentModel.find({ title: title }).exec();
+                return t;
             }
             else {
-                return yield api.instrumentModel.find().exec();
+                return yield api.models.instrumentModel.find().exec();
             }
-        });
-    }
-    getByTitle(title) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield api.instrumentModel.findOne({ title: title }).exec();
         });
     }
     sync() {
@@ -51,7 +47,7 @@ class InstrumentService {
                     yield localInstrument.save();
                 }
                 else {
-                    let model = new api.instrumentModel(mappedInstrument);
+                    let model = new api.models.instrumentModel(mappedInstrument);
                     yield model.save();
                 }
             }
@@ -62,7 +58,7 @@ class InstrumentService {
     }
     syncCandles(instrument) {
         return __awaiter(this, void 0, void 0, function* () {
-            let candleService = new candle.CandleSyncService();
+            let candleService = new candle.services.CandleSyncService();
             for (let granularity of instrument.granularities) {
                 candleService.instrument = shared.InstrumentEnum[instrument.title];
                 candleService.granularity = shared.GranularityEnum[granularity];

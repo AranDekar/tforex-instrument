@@ -14,7 +14,7 @@ class CandleSyncService {
     sync() {
         return __awaiter(this, void 0, void 0, function* () {
             let service = new shared.OandaService();
-            let candleService = new api.Service.CandleService();
+            let candleService = new api.services.CandleService();
             let candleModel = candleService.getModel(this.instrument, this.granularity);
             if (!candleModel) {
                 throw new Error('candle model in undefined in CandleService!');

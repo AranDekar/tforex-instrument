@@ -4,54 +4,24 @@ import * as shared from '../../shared';
 
 export async function getCandles(req, res, next) {
     try {
-        let result: api.Model.Candle[] = [];
-        let instrument: string | undefined;
-        let granularity: shared.GranularityEnum | undefined;
-        let timeFrom: Date | undefined;
-        let timeTo: Date | undefined;
+        let result: api.models.Candle;
+        let instrument: string;
+        let granularity: shared.GranularityEnum;
 
         instrument = req.swagger.params.instrument.value;
         granularity = req.swagger.params.granularity.value;
-        timeFrom = req.swagger.params.timeFrom.value;
-        timeTo = req.swagger.params.timeTo.value;
 
-        let service = new api.Service.CandleService();
+        let service = new api.services.CandleService();
 
-        if (!instrument || !granularity || !timeFrom) {
-            throw new Error('arguments are not supplied!');
+        let data = await service.get(instrument, granularity);
+        if (data) {
+            res.status(200).json(data);
+        } else {
+            res.statusCode = 404;
+            next(new Error('Not found'));
         }
-
-        let data = await service.get(instrument, granularity, timeFrom, timeTo);
-        res.json(data);
     } catch (err) {
         res.statusCode = 500; // bad server
-        next(err);
-    }
-}
-
-export async function importCandles(req, res, next) {
-    let body = req.body;
-    if (!body) {
-        throw new Error('body is undefined');
-    }
-    try {
-
-        let instrumentService = new instrument.InstrumentService();
-        let instrumentItem = await instrumentService.getByTitle(body.instrument);
-        if (instrumentItem.granularities.indexOf(body.granularity) === -1) {
-            instrumentItem.granularities.push(body.granularity);
-            await instrumentItem.save();
-        }
-
-        let service = new api.Service.CandleSyncService();
-        service.instrument = body.instrument;
-        service.granularity = body.granularity;
-
-        await service.sync();
-
-        res.json({ message: 'candles are being synced' });
-    } catch (err) {
-        res.statusCode = 500; // internal server error
         next(err);
     }
 }
@@ -66,7 +36,7 @@ export async function getHistoryData(req, res, next) {
         instrument = req.swagger.params.instrument.value;
         granularity = req.swagger.params.granularity.value;
 
-        let service = new api.Service.CandleService();
+        let service = new api.services.CandleService();
         await service.getHistoryData(topic, instrument, granularity);
         res.status(200).json({ message: 'candles are being published' });
     } catch (err) {
