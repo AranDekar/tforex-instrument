@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
-const shared = require("../../shared");
-let mongoose = shared.DataAccess.mongooseInstance;
+const api = require("../../instrument");
+let mongoose = api.shared.DataAccess.mongooseInstance;
 let schema = new mongoose_1.Schema({
     displayName: String,
     halted: Boolean,

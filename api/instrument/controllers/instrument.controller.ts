@@ -1,10 +1,9 @@
 import * as api from '../../instrument';
-import * as shared from '../../shared';
 
 export async function getInstruments(req, res, next) {
     try {
         let result: api.models.Instrument[] = [];
-        let title: shared.InstrumentEnum | undefined;
+        let title: api.enums.InstrumentEnum | undefined;
         if (req.swagger.params && req.swagger.params.title) {
             title = req.swagger.params.title.value;
         }

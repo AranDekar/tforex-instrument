@@ -9,8 +9,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const api = require("../../instrument");
-const shared = require("../../shared");
-const candle = require("../../candle");
 class InstrumentService {
     get(title = undefined) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25,7 +23,7 @@ class InstrumentService {
     }
     sync() {
         return __awaiter(this, void 0, void 0, function* () {
-            let service = new shared.OandaService();
+            let service = new api.proxies.OandaProxy();
             let instruments = yield service.getInstruments();
             let localInstruments = yield this.get();
             for (let instrument of instruments) {
@@ -58,10 +56,10 @@ class InstrumentService {
     }
     syncCandles(instrument) {
         return __awaiter(this, void 0, void 0, function* () {
-            let candleService = new candle.services.CandleSyncService();
+            let candleService = new api.services.CandleSyncService();
             for (let granularity of instrument.granularities) {
-                candleService.instrument = shared.InstrumentEnum[instrument.title];
-                candleService.granularity = shared.GranularityEnum[granularity];
+                candleService.instrument = api.enums.InstrumentEnum[instrument.title];
+                candleService.granularity = api.enums.GranularityEnum[granularity];
                 yield candleService.sync();
                 break;
             }

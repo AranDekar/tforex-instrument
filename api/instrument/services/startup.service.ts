@@ -1,16 +1,15 @@
 import * as kafka from 'kafka-node';
 
 import * as api from '../../instrument';
-import * as shared from '../../shared';
 
 export class KafkaTestProducerService {
     private static _producer: kafka.Producer;
     public static connect() {
 
-        console.log(`trying to connect to ${shared.Config.settings.kafka_conn_string} in producer`);
+        console.log(`trying to connect to ${api.shared.Config.settings.kafka_conn_string} in producer`);
         let client = new kafka.Client(
-            shared.Config.settings.kafka_conn_string,
-            shared.Config.settings.client_id);
+            api.shared.Config.settings.kafka_conn_string,
+            api.shared.Config.settings.client_id);
 
         KafkaTestProducerService._producer = new kafka.HighLevelProducer(client);
         (<any>client).refreshMetadata(['test'], (err, data) => {

@@ -1,9 +1,8 @@
 import { Document, Schema, Model, Types } from 'mongoose';
 
 import * as api from '../../instrument';
-import * as shared from '../../shared';
 
-let mongoose = shared.DataAccess.mongooseInstance;
+let mongoose = api.shared.DataAccess.mongooseInstance;
 
 export interface Instrument {
     displayName: string;

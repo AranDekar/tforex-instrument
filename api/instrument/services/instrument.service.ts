@@ -1,11 +1,9 @@
 import { Types } from 'mongoose';
 
 import * as api from '../../instrument';
-import * as shared from '../../shared';
-import * as candle from '../../candle';
 
 export class InstrumentService {
-    public async get(title: shared.InstrumentEnum | undefined = undefined): Promise<api.models.InstrumentDocument[]> {
+    public async get(title: api.enums.InstrumentEnum | undefined = undefined): Promise<api.models.InstrumentDocument[]> {
         if (title) {
             let t = await api.models.instrumentModel.find({ title: title }).exec();
             return t;
@@ -15,7 +13,7 @@ export class InstrumentService {
     }
 
     public async sync() {
-        let service = new shared.OandaService();
+        let service = new api.proxies.OandaProxy();
         let instruments = await service.getInstruments();
         let localInstruments = await this.get();
 
@@ -48,10 +46,10 @@ export class InstrumentService {
         }
     }
     private async syncCandles(instrument: api.models.InstrumentDocument) {
-        let candleService = new candle.services.CandleSyncService();
+        let candleService = new api.services.CandleSyncService();
         for (let granularity of instrument.granularities) {
-            candleService.instrument = shared.InstrumentEnum[instrument.title];
-            candleService.granularity = shared.GranularityEnum[granularity];
+            candleService.instrument = api.enums.InstrumentEnum[instrument.title];
+            candleService.granularity = api.enums.GranularityEnum[granularity];
             await candleService.sync();
             break;
         }
