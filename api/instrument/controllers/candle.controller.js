@@ -34,25 +34,5 @@ function getCandles(req, res, next) {
     });
 }
 exports.getCandles = getCandles;
-function getHistoryData(req, res, next) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            let instrument;
-            let granularity;
-            let topic;
-            topic = req.swagger.params.topic.value;
-            instrument = req.swagger.params.instrument.value;
-            granularity = req.swagger.params.granularity.value;
-            let service = new api.services.CandleService();
-            yield service.getHistoryData(topic, instrument, granularity);
-            res.status(200).json({ message: 'candles are being published' });
-        }
-        catch (err) {
-            res.statusCode = 500; // bad server
-            next(err);
-        }
-    });
-}
-exports.getHistoryData = getHistoryData;
 
 //# sourceMappingURL=candle.controller.js.map
