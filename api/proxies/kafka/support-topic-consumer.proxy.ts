@@ -47,12 +47,12 @@ export class SupportTopicConsumerProxy {
                                     if (instrumentItem[0].granularities.indexOf(item.granularity) === -1) {
                                         instrumentItem[0].granularities.push(item.granularity);
                                         await instrumentItem[0].save();
-
-                                        let service = new api.services.CandleSyncService();
-                                        service.instrument = item.instrument;
-                                        service.granularity = item.granularity;
-                                        await service.sync();
                                     }
+
+                                    let service = new api.services.CandleSyncService();
+                                    service.instrument = item.instrument;
+                                    service.granularity = item.granularity;
+                                    await service.sync();
                                 }
                                 done(null, true);
                             }, opts).then(function () {
