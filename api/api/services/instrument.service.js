@@ -67,5 +67,4 @@ class InstrumentService {
     }
 }
 exports.InstrumentService = InstrumentService;
-
 //# sourceMappingURL=instrument.service.js.map

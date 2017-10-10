@@ -16,6 +16,7 @@ export interface Candle {
     openBid: number;
     time: string;
     volume: number;
+    isDispatched: Boolean;
 }
 export interface CandleDocument extends api.models.Candle, Document {
 }
@@ -32,6 +33,7 @@ let schema = new Schema({
     openBid: { type: Number },
     volume: { type: Number },
     time: { type: String },
+    isDispatched: { type: Boolean, default: false },
 });
 
 schema.index({ time: 1 }); // schema level ascending index on time
@@ -41,6 +43,7 @@ export interface CandleModel extends Model<CandleDocument> {
     getAllCandles(model: Model<CandleDocument>): Promise<CandleDocument[]>;
     findLastCandle(model: Model<CandleDocument>): Promise<CandleDocument>;
     findCandleByTime(model: Model<CandleDocument>, time: string): Promise<CandleDocument>;
+    findUndispatchedCandles(model: Model<CandleDocument>): Promise<CandleDocument[]>;
 }
 
 schema.statics.getAllCandles = async (model: Model<CandleDocument>) => {
@@ -50,6 +53,12 @@ schema.statics.getAllCandles = async (model: Model<CandleDocument>) => {
         .exec();
 };
 
+schema.statics.findUndispatchedEvents = async (model: Model<CandleDocument>) => {
+    return model
+        .find({ isDispatched: false })
+        .sort({ 'time': -1 })
+        .exec();
+};
 schema.statics.findLastCandle = async (model: Model<CandleDocument>) => {
     return model
         .findOne()

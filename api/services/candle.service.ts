@@ -58,15 +58,19 @@ export class CandleService {
                 break;
         }
     }
-    public getProducer(instrument: api.enums.InstrumentEnum, granularity: api.enums.GranularityEnum):
-        api.proxies.CandleProducer | undefined {
+
+    public findTopicName(instrument: api.enums.InstrumentEnum, granularity: api.enums.GranularityEnum):
+        string {
+
+        const audUsdM5Topic = 'audUsdM5';
         switch (instrument) {
             case api.enums.InstrumentEnum.AUD_USD:
                 switch (granularity) {
                     case api.enums.GranularityEnum.M5:
-                        return new api.proxies.AudUsdM5TopicProducerProxy();
+                        return audUsdM5Topic;
                 }
                 break;
         }
+        throw new Error('cannot find the topic name!');
     }
 }

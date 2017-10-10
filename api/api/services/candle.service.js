@@ -72,5 +72,4 @@ class CandleService {
     }
 }
 exports.CandleService = CandleService;
-
 //# sourceMappingURL=candle.service.js.map

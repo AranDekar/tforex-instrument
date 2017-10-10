@@ -9,13 +9,16 @@ export class CandleSyncService {
     private startTime: string;
     private endTime: string;
     public async sync() {
-        let service = new api.proxies.OandaProxy();
+        let service = new api.proxies.http.OandaProxy();
         let candleService = new api.services.CandleService();
+
         let candleModel = candleService.getModel(this.instrument, this.granularity);
-        let candleProducer = candleService.getProducer(this.instrument, this.granularity);
-        if (!candleModel || !candleProducer) {
+        if (!candleModel) {
             throw new Error('candle model/producer in undefined in CandleService!');
         }
+
+        let topicName = candleService.findTopicName(this.instrument, this.granularity);
+        let producer = new api.proxies.kafka.InstrumentGranularityTopicProducerProxy(topicName, candleModel);
 
         let lastCandle: api.models.Candle = await candleModel.findLastCandle(candleModel);
 
@@ -41,13 +44,11 @@ export class CandleSyncService {
                     if (!existing) {
                         let model = new candleModel(candle);
                         await model.save();
-                        // TODO: two phase commit here (add is dispatched flag and then fetch it from producer)
-                        candleProducer.send(candle);
                     }
                 }
             }
         } while (stillInLoop);
-
+        producer.publish();
     }
     private setStartTime() {
         let startTime = new Date();

@@ -53,5 +53,4 @@ var candles;
 (function (candles) {
     candles.audUsdM5 = mongoose.model('audusdm5', schema);
 })(candles = exports.candles || (exports.candles = {}));
-
 //# sourceMappingURL=candle.model.js.map

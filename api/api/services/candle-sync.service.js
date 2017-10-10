@@ -124,5 +124,4 @@ class CandleSyncService {
     }
 }
 exports.CandleSyncService = CandleSyncService;
-
 //# sourceMappingURL=candle-sync.service.js.map
