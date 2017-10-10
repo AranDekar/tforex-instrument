@@ -5,7 +5,7 @@ info:
 # during dev, should point to your local machine
 host: localhost:10040
 # basePath prefixes all resource paths 
-basePath: /
+basePath: /instruments
 # 
 schemes:
   # tip: remove http to make production-grade
@@ -36,7 +36,7 @@ tags:
 
     
 paths:
-  /instruments:
+  /:
     x-swagger-router-controller: instrument.controller
     get:
       tags: 
@@ -66,7 +66,7 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
-  /candles:
+  /{instrument}/candles/{granularity}:
     # binds a127 app logic to a route
     x-swagger-router-controller: candle.controller
     get:
@@ -79,7 +79,7 @@ paths:
       parameters:
         - name: instrument
           description: the instrument of the candles
-          in: query
+          in: path
           required: true
           type: string
           enum:
@@ -87,7 +87,7 @@ paths:
         - name: granularity
           description: the granularity in which the candles are fetched
           type: string
-          in: query
+          in: path
           enum:
             - M5
           required: true
