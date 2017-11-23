@@ -103,5 +103,4 @@ exports.OandaProxy = OandaProxy;
 
  *
  */ 
-
 //# sourceMappingURL=oanda.proxy.js.map

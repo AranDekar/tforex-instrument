@@ -13,7 +13,7 @@ export class InstrumentService {
     }
 
     public async sync() {
-        let service = new api.proxies.http.OandaProxy();
+        let service = new api.proxies.OandaProxy();
         let instruments = await service.getInstruments();
         let localInstruments = await this.get();
 

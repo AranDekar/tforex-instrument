@@ -35,5 +35,4 @@ class Config {
 }
 exports.Config = Config;
 Config.setup();
-
 //# sourceMappingURL=app-settings.js.map

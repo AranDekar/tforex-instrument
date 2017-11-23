@@ -53,7 +53,7 @@ schema.statics.getAllCandles = async (model: Model<CandleDocument>) => {
         .exec();
 };
 
-schema.statics.findUndispatchedEvents = async (model: Model<CandleDocument>) => {
+schema.statics.findUndispatchedCandles = async (model: Model<CandleDocument>) => {
     return model
         .find({ isDispatched: false })
         .sort({ 'time': -1 })

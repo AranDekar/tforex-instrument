@@ -17,5 +17,4 @@ let schema = new mongoose_1.Schema({
     path: { type: String, default: null },
 });
 exports.instrumentModel = mongoose.model('instruments', schema);
-
 //# sourceMappingURL=instrument.model.js.map

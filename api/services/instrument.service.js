@@ -23,7 +23,7 @@ class InstrumentService {
     }
     sync() {
         return __awaiter(this, void 0, void 0, function* () {
-            let service = new api.proxies.http.OandaProxy();
+            let service = new api.proxies.OandaProxy();
             let instruments = yield service.getInstruments();
             let localInstruments = yield this.get();
             for (let instrument of instruments) {
@@ -67,5 +67,4 @@ class InstrumentService {
     }
 }
 exports.InstrumentService = InstrumentService;
-
 //# sourceMappingURL=instrument.service.js.map

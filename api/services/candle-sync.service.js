@@ -12,14 +12,14 @@ const api = require("../../api");
 class CandleSyncService {
     sync() {
         return __awaiter(this, void 0, void 0, function* () {
-            let service = new api.proxies.http.OandaProxy();
+            let service = new api.proxies.OandaProxy();
             let candleService = new api.services.CandleService();
             let candleModel = candleService.getModel(this.instrument, this.granularity);
             if (!candleModel) {
                 throw new Error('candle model/producer in undefined in CandleService!');
             }
             let topicName = candleService.findTopicName(this.instrument, this.granularity);
-            let producer = new api.proxies.kafka.InstrumentGranularityTopicProducerProxy(topicName, candleModel);
+            let producer = new api.proxies.InstrumentGranularityTopicProducerProxy(topicName, null, candleModel);
             let lastCandle = yield candleModel.findLastCandle(candleModel);
             if (lastCandle) {
                 this.endTime = new Date(Number(lastCandle.time)).toISOString();
@@ -55,7 +55,7 @@ class CandleSyncService {
             switch (this.granularity) {
                 case api.enums.GranularityEnum.M5:
                     if (!this.endTime) {
-                        startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 1, 0); // 1 months data for M5
+                        startTime = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate(), startTime.getHours() - 6); // 1 months data for M5
                     }
                     break;
                 case api.enums.GranularityEnum.M15:
@@ -124,5 +124,4 @@ class CandleSyncService {
     }
 }
 exports.CandleSyncService = CandleSyncService;
-
 //# sourceMappingURL=candle-sync.service.js.map

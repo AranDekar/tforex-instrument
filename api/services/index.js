@@ -7,5 +7,4 @@ __export(require("./instrument.service"));
 __export(require("./startup.service"));
 __export(require("./candle.service"));
 __export(require("./candle-sync.service"));
-
 //# sourceMappingURL=index.js.map

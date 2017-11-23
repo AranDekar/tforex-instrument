@@ -5,10 +5,10 @@
             "name": "Launch",
             "type": "node",
             "request": "launch",
-            "program": "${workspaceRoot}/app.js",
+            "program": "${workspaceFolder}/app.js",
             "stopOnEntry": false,
             "args": [],
-            "cwd": "${workspaceRoot}",
+            "cwd": "${workspaceFolder}",
             "preLaunchTask": null,
             "runtimeExecutable": null,
             "runtimeArgs": [
@@ -21,7 +21,6 @@
                 "PORT": "10040"
             },
             "smartStep": true,
-            "console": "integratedTerminal",
             "sourceMaps": true,
             "outFiles": []
         },
@@ -34,14 +33,14 @@
             "restart": false,
             "sourceMaps": false,
             "outFiles": [],
-            "localRoot": "${workspaceRoot}",
+            "localRoot": "${workspaceFolder}",
             "remoteRoot": null
         },
         {
             "name": "Attach to Process",
             "type": "node",
             "request": "attach",
-            "processId": "${command.PickProcess}",
+            "processId": "${command:PickProcess}",
             "port": 5858,
             "sourceMaps": false,
             "outFiles": []

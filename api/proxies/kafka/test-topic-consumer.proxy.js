@@ -44,5 +44,4 @@ setTimeout(() => __awaiter(this, void 0, void 0, function* () {
     let prx = new TestTopicConsumerProxy();
     prx.connect();
 }), 2000);
-
 //# sourceMappingURL=test-topic-consumer.proxy.js.map

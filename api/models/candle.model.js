@@ -32,7 +32,7 @@ schema.statics.getAllCandles = (model) => __awaiter(this, void 0, void 0, functi
         .sort({ 'time': 1 })
         .exec();
 });
-schema.statics.findUndispatchedEvents = (model) => __awaiter(this, void 0, void 0, function* () {
+schema.statics.findUndispatchedCandles = (model) => __awaiter(this, void 0, void 0, function* () {
     return model
         .find({ isDispatched: false })
         .sort({ 'time': -1 })
@@ -53,5 +53,4 @@ var candles;
 (function (candles) {
     candles.audUsdM5 = mongoose.model('audusdm5', schema);
 })(candles = exports.candles || (exports.candles = {}));
-
 //# sourceMappingURL=candle.model.js.map

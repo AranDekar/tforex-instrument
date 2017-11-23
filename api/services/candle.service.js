@@ -16,7 +16,15 @@ class CandleService {
             if (!candleModel) {
                 throw new Error('cannot get the candle model!');
             }
-            return yield candleModel.findLastCandle(candleModel);
+            return yield candleModel.getAllCandles(candleModel);
+        });
+    }
+    publish(instrument, granularity, topic) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let candles = yield this.get(instrument, granularity);
+            let producer = new api.proxies.InstrumentGranularityTopicProducerProxy(topic, candles, null);
+            yield producer.publish();
+            return candles.length;
         });
     }
     isCandleUpToDate(granularity, endDate) {
@@ -72,5 +80,4 @@ class CandleService {
     }
 }
 exports.CandleService = CandleService;
-
 //# sourceMappingURL=candle.service.js.map

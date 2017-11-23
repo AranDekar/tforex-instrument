@@ -9,7 +9,7 @@ export class CandleSyncService {
     private startTime: string;
     private endTime: string;
     public async sync() {
-        let service = new api.proxies.http.OandaProxy();
+        let service = new api.proxies.OandaProxy();
         let candleService = new api.services.CandleService();
 
         let candleModel = candleService.getModel(this.instrument, this.granularity);
@@ -18,7 +18,7 @@ export class CandleSyncService {
         }
 
         let topicName = candleService.findTopicName(this.instrument, this.granularity);
-        let producer = new api.proxies.kafka.InstrumentGranularityTopicProducerProxy(topicName, candleModel);
+        let producer = new api.proxies.InstrumentGranularityTopicProducerProxy(topicName, null, candleModel);
 
         let lastCandle: api.models.Candle = await candleModel.findLastCandle(candleModel);
 
@@ -58,7 +58,8 @@ export class CandleSyncService {
             switch (this.granularity) {
                 case api.enums.GranularityEnum.M5:
                     if (!this.endTime) {
-                        startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 1, 0);  // 1 months data for M5
+                        startTime = new Date(startTime.getFullYear(), startTime.getMonth(),
+                            startTime.getDate(), startTime.getHours() - 6);  // 1 months data for M5
                     }
                     break;
                 case api.enums.GranularityEnum.M15:
@@ -126,4 +127,81 @@ export class CandleSyncService {
         this.endTime = endTime.toISOString();
         return true;
     }
+
+    // private setStartTime() {
+    //     let startTime = new Date();
+    //     if (this.endTime) {
+    //         startTime = new Date(this.endTime);
+    //     } else {
+    //         switch (this.granularity) {
+    //             case api.enums.GranularityEnum.M5:
+    //                 if (!this.endTime) {
+    //                     startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 1, 0);  // 1 months data for M5
+    //                 }
+    //                 break;
+    //             case api.enums.GranularityEnum.M15:
+    //                 if (!this.endTime) {
+    //                     startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 3, 0);  // 3 months data for M15
+    //                 }
+    //                 break;
+    //             case api.enums.GranularityEnum.M30:
+    //                 if (!this.endTime) {
+    //                     startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 6, 0);  // 6 months data for M30
+    //                 }
+    //                 break;
+    //             case api.enums.GranularityEnum.H1:
+    //                 if (!this.endTime) {
+    //                     startTime = new Date(startTime.getFullYear() - 1, startTime.getMonth(), 0);  // 1 year data for H1
+    //                 }
+    //                 break;
+    //             case api.enums.GranularityEnum.H4:
+    //                 if (!this.endTime) {
+    //                     startTime = new Date(startTime.getFullYear() - 4, startTime.getMonth(), 0);  // 4 years data for H4
+    //                 }
+    //                 break;
+    //             case api.enums.GranularityEnum.D1:
+    //                 if (!this.endTime) {
+    //                     startTime = new Date(startTime.getFullYear() - 10, startTime.getMonth(), 0);  // 10 years data for H1
+    //                 }
+    //                 break;
+    //         }
+    //     }
+    //     this.startTime = startTime.toISOString();
+    // }
+
+    // private setEndTime(): boolean {
+    //     let endTime = new Date(this.startTime);
+    //     switch (this.granularity) {
+    //         case api.enums.GranularityEnum.M5:
+    //             // 15 days for M5, 288 candles per day
+    //             endTime = new Date(endTime.getFullYear(), endTime.getMonth(), endTime.getDate() + 15);
+    //             break;
+    //         case api.enums.GranularityEnum.M15:
+    //             // 45 days for M15, 98 candles per day
+    //             endTime = new Date(endTime.getFullYear(), endTime.getMonth(), endTime.getDate() + 45);
+    //             break;
+    //         case api.enums.GranularityEnum.M30:
+    //             // 90 days for M30, 48 candles per day
+    //             endTime = new Date(endTime.getFullYear(), endTime.getMonth(), endTime.getDate() + 90);
+    //             break;
+    //         case api.enums.GranularityEnum.H1:
+    //             // 180 days for H1, 24 candles per day
+    //             endTime = new Date(endTime.getFullYear(), endTime.getMonth(), endTime.getDate() + 180);
+    //             break;
+    //         case api.enums.GranularityEnum.H4:
+    //             // 720 days for H4, 6 candles per day
+    //             endTime = new Date(endTime.getFullYear(), endTime.getMonth(), endTime.getDate() + 720);
+    //             break;
+    //         case api.enums.GranularityEnum.D1:
+    //             // 4320 days for D1, 1 candle per day
+    //             endTime = new Date(endTime.getFullYear(), endTime.getMonth(), endTime.getDate() + 4320);
+    //             break;
+    //     }
+    //     if (endTime > new Date()) {
+    //         this.endTime = new Date().toISOString();
+    //         return false;
+    //     }
+    //     this.endTime = endTime.toISOString();
+    //     return true;
+    // }
 }

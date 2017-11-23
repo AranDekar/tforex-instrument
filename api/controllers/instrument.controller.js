@@ -28,5 +28,4 @@ function getInstruments(req, res, next) {
     });
 }
 exports.getInstruments = getInstruments;
-
 //# sourceMappingURL=instrument.controller.js.map

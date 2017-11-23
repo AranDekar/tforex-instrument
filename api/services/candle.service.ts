@@ -4,13 +4,20 @@ import * as api from '../../api';
 export class CandleService {
 
     public async get(instrument: string, granularity: api.enums.GranularityEnum):
-        Promise<api.models.CandleDocument> {
+        Promise<api.models.CandleDocument[]> {
         let candleModel = this.getModel(api.enums.InstrumentEnum[instrument], granularity);
 
         if (!candleModel) {
             throw new Error('cannot get the candle model!');
         }
-        return await candleModel.findLastCandle(candleModel);
+        return await candleModel.getAllCandles(candleModel);
+    }
+
+    public async publish(instrument: string, granularity: api.enums.GranularityEnum, topic: string): Promise<number> {
+        let candles = await this.get(instrument, granularity);
+        let producer = new api.proxies.InstrumentGranularityTopicProducerProxy(topic, candles, null);
+        await producer.publish();
+        return candles.length;
     }
 
     public isCandleUpToDate(granularity: api.enums.GranularityEnum, endDate: string) {

@@ -28,6 +28,8 @@ class SupportTopicConsumerProxy {
         });
         // if you don't see any message coming, it may be because you have deleted the topic and the offset
         // is not reset with this client id.
+        let lock = new asyncLock();
+        let key, opts = null;
         this._consumer.on('message', (message) => __awaiter(this, void 0, void 0, function* () {
             if (message && message.value) {
                 try {
@@ -37,9 +39,7 @@ class SupportTopicConsumerProxy {
                             let svc = new api.services.InstrumentService();
                             return yield svc.sync();
                         case importCandles:
-                            let lock = new asyncLock();
-                            let key, opts = null;
-                            lock.acquire(key, function (done) {
+                            lock.acquire(key, function () {
                                 return __awaiter(this, void 0, void 0, function* () {
                                     let instrumentService = new api.services.InstrumentService();
                                     let instrumentItem = yield instrumentService.get(item.instrument);
@@ -53,10 +53,15 @@ class SupportTopicConsumerProxy {
                                         service.granularity = item.granularity;
                                         yield service.sync();
                                     }
-                                    done(null, true);
+                                    else {
+                                        throw new Error('instrument is not imported!');
+                                    }
+                                    return;
                                 });
                             }, opts).then(function () {
-                                // lock released
+                                console.log('lock released');
+                            }).catch(function (err) {
+                                console.error(err.message);
                             });
                     }
                 }
@@ -79,5 +84,4 @@ setTimeout(() => __awaiter(this, void 0, void 0, function* () {
     let prx = new SupportTopicConsumerProxy();
     prx.connect();
 }), 5000);
-
 //# sourceMappingURL=support-topic-consumer.proxy.js.map

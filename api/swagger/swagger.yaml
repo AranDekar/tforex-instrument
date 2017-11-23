@@ -66,7 +66,7 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
-  /{instrument}/candles/{granularity}:
+  /{instrument}/candles/{granularity}/publish/{topic}:
     # binds a127 app logic to a route
     x-swagger-router-controller: candle.controller
     get:
@@ -91,13 +91,21 @@ paths:
           enum:
             - M5
           required: true
+        - name: topic
+          description: the candles will be published into this topic
+          type: string
+          in: path
+          required: true
       responses:
         "200":
           description: Success
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/Candle"
+            type: object
+            properties:
+              count:
+                type: integer
+            example:   # Sample object
+              count: 100
         default:
           description: Error
           schema:

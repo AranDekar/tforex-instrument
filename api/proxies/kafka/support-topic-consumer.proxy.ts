@@ -27,6 +27,8 @@ export class SupportTopicConsumerProxy {
         );
         // if you don't see any message coming, it may be because you have deleted the topic and the offset
         // is not reset with this client id.
+        let lock = new asyncLock();
+        let key, opts = null;
         this._consumer.on('message', async (message: any) => {
             if (message && message.value) {
                 try {
@@ -36,10 +38,7 @@ export class SupportTopicConsumerProxy {
                             let svc = new api.services.InstrumentService();
                             return await svc.sync();
                         case importCandles:
-
-                            let lock = new asyncLock();
-                            let key, opts = null;
-                            lock.acquire(key, async function (done) {
+                            lock.acquire(key, async function () {
                                 let instrumentService = new api.services.InstrumentService();
 
                                 let instrumentItem = await instrumentService.get(item.instrument);
@@ -53,10 +52,14 @@ export class SupportTopicConsumerProxy {
                                     service.instrument = item.instrument;
                                     service.granularity = item.granularity;
                                     await service.sync();
+                                } else {
+                                    throw new Error('instrument is not imported!');
                                 }
-                                done(null, true);
+                                return;
                             }, opts).then(function () {
-                                // lock released
+                                console.log('lock released');
+                            }).catch(function (err) {
+                                console.error(err.message);
                             });
 
                     }

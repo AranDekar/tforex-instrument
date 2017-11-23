@@ -5,5 +5,4 @@ function __export(m) {
 Object.defineProperty(exports, "__esModule", { value: true });
 __export(require("./instrument.enum"));
 __export(require("./granularity.enum"));
-
 //# sourceMappingURL=index.js.map

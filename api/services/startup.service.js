@@ -52,5 +52,4 @@ class KafkaTestProducerService {
     }
 }
 exports.KafkaTestProducerService = KafkaTestProducerService;
-
 //# sourceMappingURL=startup.service.js.map

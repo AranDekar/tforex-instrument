@@ -4,8 +4,6 @@
         "target": "es2015",
         "module": "commonjs",
         "moduleResolution": "node",
-        "rootDir": ".",
-        "outDir": "api/",
         "sourceMap": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
