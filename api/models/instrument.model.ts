@@ -2,7 +2,7 @@ import { Document, Schema, Model, Types } from 'mongoose';
 
 import * as api from '../../api';
 
-let mongoose = api.shared.DataAccess.mongooseInstance;
+const mongoose = api.shared.DataAccess.mongooseInstance;
 
 export interface Instrument {
     displayName: string;
@@ -21,7 +21,7 @@ export interface Instrument {
 export interface InstrumentDocument extends api.models.Instrument, Document {
 }
 
-let schema = new Schema({
+const schema = new Schema({
     displayName: String,
     halted: Boolean,
     title: String,
@@ -31,9 +31,8 @@ let schema = new Schema({
     minTrailingStop: Number,
     pip: String,
     precision: String,
-    granularities: [{ type: String, enum: ['M5'] }],
+    granularities: [{ type: String, enum: ['M5', 'H1', 'H4'] }],
     path: { type: String, default: null },
 });
-
 
 export let instrumentModel = mongoose.model<InstrumentDocument>('instruments', schema);

@@ -1,95 +1,106 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const api = require("../../api");
+const api = require("api");
 class CandleSyncService {
-    sync() {
-        return __awaiter(this, void 0, void 0, function* () {
-            let service = new api.proxies.OandaProxy();
-            let candleService = new api.services.CandleService();
-            let candleModel = candleService.getModel(this.instrument, this.granularity);
-            if (!candleModel) {
-                throw new Error('candle model/producer in undefined in CandleService!');
-            }
-            let topicName = candleService.findTopicName(this.instrument, this.granularity);
-            let producer = new api.proxies.InstrumentGranularityTopicProducerProxy(topicName, null, candleModel);
-            let lastCandle = yield candleModel.findLastCandle(candleModel);
+    async sync(instrument) {
+        const allCandles = [];
+        const granularities = [
+            api.enums.GranularityEnum.M5,
+            api.enums.GranularityEnum.M15,
+            api.enums.GranularityEnum.M30,
+            api.enums.GranularityEnum.H1,
+            api.enums.GranularityEnum.H4,
+            api.enums.GranularityEnum.D1,
+        ];
+        const proxy = new api.proxies.OandaProxy();
+        const candleService = new api.services.CandleService();
+        const candleModel = candleService.getModel(instrument);
+        if (!candleModel) {
+            throw new Error('candle model is undefined in CandleService!');
+        }
+        for (const currGranularity of granularities) {
+            this.startTime = '';
+            this.endTime = '';
+            const lastCandle = await candleModel.findLastCandle(candleModel, currGranularity);
             if (lastCandle) {
                 this.endTime = new Date(Number(lastCandle.time)).toISOString();
             }
             let stillInLoop = false;
             do {
-                this.setStartTime();
-                stillInLoop = this.setEndTime();
+                this.setStartTime(currGranularity);
+                stillInLoop = this.setEndTime(currGranularity);
                 if (this.startTime >= this.endTime) {
                     break;
                 }
-                let candles = yield service.getCandles(this.instrument, this.startTime, this.endTime, this.granularity);
-                for (let candle of candles) {
-                    if (candle.complete) {
-                        candle.time = candle.time / 1000;
-                        let existing = yield candleModel.findCandleByTime(candleModel, candle.time);
-                        if (!existing) {
-                            let model = new candleModel(candle);
-                            yield model.save();
-                        }
-                    }
-                }
+                const candles = await proxy.getCandles(instrument, this.startTime, this.endTime, currGranularity);
+                allCandles.push(candles);
             } while (stillInLoop);
-            producer.publish();
-        });
+        }
+        const completedCandles = allCandles.filter((x) => x.completed);
+        const sortedCompletedCandles = completedCandles.sort((a, b) => a.time - b.time);
+        sortedCompletedCandles.forEach((x) => x.time = x.time / 1000);
+        await candleModel.create(sortedCompletedCandles);
+        // for (const candle of allCandles.sort((a, b) => a.time - b.time)) {
+        //     if (candle.complete) {
+        //         candle.time = candle.time / 1000;
+        //         // const existing = await candleModel.findCandleByTime(candleModel, candle.time, candle.granularity);
+        //         // if (!existing) {
+        //         const model = new candleModel(candle);
+        //         await model.save();
+        //         // }
+        //     }
+        // }
     }
-    setStartTime() {
+    setStartTime(granularity) {
         let startTime = new Date();
         if (this.endTime) {
             startTime = new Date(this.endTime);
         }
         else {
-            switch (this.granularity) {
+            switch (granularity) {
                 case api.enums.GranularityEnum.M5:
                     if (!this.endTime) {
-                        startTime = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate(), startTime.getHours() - 6); // 1 months data for M5
+                        startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 1, 0);
+                        // 1 months data for M5
                     }
                     break;
                 case api.enums.GranularityEnum.M15:
                     if (!this.endTime) {
-                        startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 3, 0); // 3 months data for M15
+                        startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 3, 0);
+                        // 3 months data for M15
                     }
                     break;
                 case api.enums.GranularityEnum.M30:
                     if (!this.endTime) {
-                        startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 6, 0); // 6 months data for M30
+                        startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 6, 0);
+                        // 6 months data for M30
                     }
                     break;
                 case api.enums.GranularityEnum.H1:
                     if (!this.endTime) {
-                        startTime = new Date(startTime.getFullYear() - 1, startTime.getMonth(), 0); // 1 year data for H1
+                        startTime = new Date(startTime.getFullYear() - 1, startTime.getMonth(), 0);
+                        // 1 year data for H1
                     }
                     break;
                 case api.enums.GranularityEnum.H4:
                     if (!this.endTime) {
-                        startTime = new Date(startTime.getFullYear() - 4, startTime.getMonth(), 0); // 4 years data for H4
+                        startTime = new Date(startTime.getFullYear() - 4, startTime.getMonth(), 0);
+                        // 4 years data for H4
                     }
                     break;
                 case api.enums.GranularityEnum.D1:
                     if (!this.endTime) {
-                        startTime = new Date(startTime.getFullYear() - 10, startTime.getMonth(), 0); // 10 years data for H1
+                        startTime = new Date(startTime.getFullYear() - 10, startTime.getMonth(), 0);
+                        // 10 years data for H1
                     }
                     break;
             }
         }
         this.startTime = startTime.toISOString();
     }
-    setEndTime() {
+    setEndTime(granularity) {
         let endTime = new Date(this.startTime);
-        switch (this.granularity) {
+        switch (granularity) {
             case api.enums.GranularityEnum.M5:
                 // 15 days for M5, 288 candles per day
                 endTime = new Date(endTime.getFullYear(), endTime.getMonth(), endTime.getDate() + 15);

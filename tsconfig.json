@@ -1,16 +1,28 @@
 {
     "compileOnSave": true,
     "compilerOptions": {
-        "target": "es2015",
+        "target": "es2017",
         "module": "commonjs",
         "moduleResolution": "node",
+        "rootDir": ".",
         "sourceMap": true,
+        "baseUrl": ".",
+        "paths": {
+            "*": [
+                "*",
+            ],
+        },
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "removeComments": false,
         "noImplicitAny": false,
         "suppressImplicitAnyIndexErrors": true,
-        "strictNullChecks": true
+        "strictNullChecks": true,
+        "lib": [
+            "es2017",
+            "dom",
+            "esnext.asynciterable"
+        ],
     },
     "exclude": [
         "node_modules"

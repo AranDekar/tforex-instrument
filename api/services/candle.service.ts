@@ -3,23 +3,22 @@ import { Types, Model } from 'mongoose';
 import * as api from '../../api';
 export class CandleService {
 
+
     public async get(instrument: string, granularity: api.enums.GranularityEnum):
         Promise<api.models.CandleDocument[]> {
-        let candleModel = this.getModel(api.enums.InstrumentEnum[instrument], granularity);
+        const candleModel = this.getModel(api.enums.InstrumentEnum[instrument]);
 
         if (!candleModel) {
             throw new Error('cannot get the candle model!');
         }
-        return await candleModel.getAllCandles(candleModel);
+        return await candleModel.getAllCandles(candleModel, granularity);
     }
 
-    public async publish(instrument: string, granularity: api.enums.GranularityEnum, topic: string): Promise<number> {
-        let candles = await this.get(instrument, granularity);
-        let producer = new api.proxies.InstrumentGranularityTopicProducerProxy(topic, candles, null);
-        await producer.publish();
-        return candles.length;
-    }
-
+    /**
+     * obsolete
+     * @param granularity
+     * @param endDate
+     */
     public isCandleUpToDate(granularity: api.enums.GranularityEnum, endDate: string) {
         let endTime = new Date(endDate);
 
@@ -55,29 +54,38 @@ export class CandleService {
         }
     }
 
-    public getModel(instrument: api.enums.InstrumentEnum, granularity: api.enums.GranularityEnum): api.models.CandleModel | undefined {
+    public getModel(instrument: api.enums.InstrumentEnum):
+        api.models.CandleModel {
         switch (instrument) {
             case api.enums.InstrumentEnum.AUD_USD:
-                switch (granularity) {
-                    case api.enums.GranularityEnum.M5:
-                        return api.models.candles.audUsdM5;
-                }
-                break;
+                return api.models.Candles.audUsd;
+            case api.enums.InstrumentEnum.GBP_USD:
+                return api.models.Candles.gbpUsd;
+            case api.enums.InstrumentEnum.EUR_USD:
+                return api.models.Candles.eurUsd;
         }
+        throw new Error(`CandleModel is undefined for ${instrument}`);
     }
-
-    public findTopicName(instrument: api.enums.InstrumentEnum, granularity: api.enums.GranularityEnum):
-        string {
-
-        const audUsdM5Topic = 'audUsdM5';
+    public getHeikinAshiModel(instrument: api.enums.InstrumentEnum): api.models.HeikinAshiModel {
         switch (instrument) {
             case api.enums.InstrumentEnum.AUD_USD:
-                switch (granularity) {
-                    case api.enums.GranularityEnum.M5:
-                        return audUsdM5Topic;
-                }
-                break;
+                return api.models.HeikinAshis.audUsd;
+            case api.enums.InstrumentEnum.GBP_USD:
+                return api.models.HeikinAshis.gbpUsd;
+            case api.enums.InstrumentEnum.EUR_USD:
+                return api.models.HeikinAshis.eurUsd;
         }
-        throw new Error('cannot find the topic name!');
+        throw new Error(`HeikinAshiModel is undefined for ${instrument}`);
+    }
+    public getLineBreakModel(instrument: api.enums.InstrumentEnum): api.models.LineBreakModel {
+        switch (instrument) {
+            case api.enums.InstrumentEnum.AUD_USD:
+                return api.models.LineBreaks.audUsd;
+            case api.enums.InstrumentEnum.GBP_USD:
+                return api.models.LineBreaks.gbpUsd;
+            case api.enums.InstrumentEnum.EUR_USD:
+                return api.models.LineBreaks.eurUsd;
+        }
+        throw new Error(`HeikinAshiModel is undefined for ${instrument}`);
     }
 }

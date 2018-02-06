@@ -1,26 +1,19 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const kafka = require("kafka-node");
-const api = require("../../../api");
-let asyncLock = require('async-lock');
+const api = require("api");
+const asyncLock = require('async-lock');
 const supportTopic = 'support';
 const importInstruments = 'import_instruments';
 const importCandles = 'import_candles';
+const produceEvents = 'produce_events';
 class SupportTopicConsumerProxy {
     connect() {
         console.log(`trying to connect to ${api.shared.Config.settings.kafka_conn_string} in consumer`);
-        let client = new kafka.KafkaClient({
+        const client = new kafka.KafkaClient({
             kafkaHost: api.shared.Config.settings.kafka_conn_string,
         });
-        this._consumer = new kafka.Consumer(client, [
+        this.consumer = new kafka.Consumer(client, [
             { topic: supportTopic },
         ], {
             autoCommit: true,
@@ -28,41 +21,60 @@ class SupportTopicConsumerProxy {
         });
         // if you don't see any message coming, it may be because you have deleted the topic and the offset
         // is not reset with this client id.
-        let lock = new asyncLock();
-        let key, opts = null;
-        this._consumer.on('message', (message) => __awaiter(this, void 0, void 0, function* () {
+        const lock = new asyncLock();
+        const key = null;
+        const opts = null;
+        this.consumer.on('message', async (message) => {
             if (message && message.value) {
                 try {
-                    let item = JSON.parse(message.value);
+                    const item = JSON.parse(message.value);
                     switch (item.command) {
                         case importInstruments:
-                            let svc = new api.services.InstrumentService();
-                            return yield svc.sync();
-                        case importCandles:
-                            lock.acquire(key, function () {
-                                return __awaiter(this, void 0, void 0, function* () {
-                                    let instrumentService = new api.services.InstrumentService();
-                                    let instrumentItem = yield instrumentService.get(item.instrument);
-                                    if (instrumentItem[0] && item.granularity) {
-                                        if (instrumentItem[0].granularities.indexOf(item.granularity) === -1) {
-                                            instrumentItem[0].granularities.push(item.granularity);
-                                            yield instrumentItem[0].save();
-                                        }
-                                        let service = new api.services.CandleSyncService();
-                                        service.instrument = item.instrument;
-                                        service.granularity = item.granularity;
-                                        yield service.sync();
-                                    }
-                                    else {
-                                        throw new Error('instrument is not imported!');
-                                    }
-                                    return;
-                                });
-                            }, opts).then(function () {
+                            lock.acquire(key, async () => {
+                                const svc = new api.services.InstrumentService();
+                                await svc.sync();
+                                return;
+                            }, opts).then(() => {
                                 console.log('lock released');
-                            }).catch(function (err) {
+                            }).catch((err) => {
                                 console.error(err.message);
                             });
+                            break;
+                        case importCandles:
+                            lock.acquire(key, async () => {
+                                const instrumentService = new api.services.InstrumentService();
+                                const instrumentItem = await instrumentService.get(item.instrument);
+                                if (instrumentItem[0] && item.granularity) {
+                                    if (instrumentItem[0].granularities.indexOf(item.granularity) === -1) {
+                                        instrumentItem[0].granularities.push(item.granularity);
+                                        await instrumentItem[0].save();
+                                    }
+                                    const service = new api.services.CandleSyncService();
+                                    await service.sync(item.instrument);
+                                }
+                                else {
+                                    throw new Error('instrument is not imported!');
+                                }
+                                return;
+                            }, opts).then(() => {
+                                console.log('lock released');
+                            }).catch((err) => {
+                                console.error(err.message);
+                            });
+                            break;
+                        case produceEvents:
+                            lock.acquire(key, async () => {
+                                const instrumentEventProducerService = new api.services.InstrumentEventProducerService();
+                                const service = new api.services.CandleSyncService();
+                                await instrumentEventProducerService.produceNewEvents(item.instrument);
+                                await instrumentEventProducerService.publishNewEvents(item.instrument);
+                                return;
+                            }, opts).then(() => {
+                                console.log('lock released');
+                            }).catch((err) => {
+                                console.error(err.message);
+                            });
+                            break;
                     }
                 }
                 catch (err) {
@@ -70,18 +82,18 @@ class SupportTopicConsumerProxy {
                     return;
                 }
             }
-        }));
-        this._consumer.on('error', (err) => {
+        });
+        this.consumer.on('error', (err) => {
             console.log(err);
         });
     }
     resetOffset() {
-        this._consumer.setOffset(supportTopic, 0, 0);
+        this.consumer.setOffset(supportTopic, 0, 0);
     }
 }
 exports.SupportTopicConsumerProxy = SupportTopicConsumerProxy;
-setTimeout(() => __awaiter(this, void 0, void 0, function* () {
-    let prx = new SupportTopicConsumerProxy();
+setTimeout(async () => {
+    const prx = new SupportTopicConsumerProxy();
     prx.connect();
-}), 5000);
+}, 5000);
 //# sourceMappingURL=support-topic-consumer.proxy.js.map

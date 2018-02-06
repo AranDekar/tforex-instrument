@@ -5,5 +5,5 @@ function __export(m) {
 Object.defineProperty(exports, "__esModule", { value: true });
 __export(require("./kafka"));
 __export(require("./http"));
-// export { kafka, http }; 
+// export { kafka, http };
 //# sourceMappingURL=index.js.map

@@ -4,5 +4,5 @@ function __export(m) {
 }
 Object.defineProperty(exports, "__esModule", { value: true });
 __export(require("./support-topic-consumer.proxy"));
-__export(require("./instrument-granularity-topic-producer.proxy"));
+__export(require("./instrument-event-producer.proxy"));
 //# sourceMappingURL=index.js.map

@@ -1,32 +1,19 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const api = require("../../api");
 class CandleService {
-    get(instrument, granularity) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let candleModel = this.getModel(api.enums.InstrumentEnum[instrument], granularity);
-            if (!candleModel) {
-                throw new Error('cannot get the candle model!');
-            }
-            return yield candleModel.getAllCandles(candleModel);
-        });
+    async get(instrument, granularity) {
+        const candleModel = this.getModel(api.enums.InstrumentEnum[instrument]);
+        if (!candleModel) {
+            throw new Error('cannot get the candle model!');
+        }
+        return await candleModel.getAllCandles(candleModel, granularity);
     }
-    publish(instrument, granularity, topic) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let candles = yield this.get(instrument, granularity);
-            let producer = new api.proxies.InstrumentGranularityTopicProducerProxy(topic, candles, null);
-            yield producer.publish();
-            return candles.length;
-        });
-    }
+    /**
+     * obsolete
+     * @param granularity
+     * @param endDate
+     */
     isCandleUpToDate(granularity, endDate) {
         let endTime = new Date(endDate);
         switch (granularity) {
@@ -56,27 +43,38 @@ class CandleService {
             return false;
         }
     }
-    getModel(instrument, granularity) {
+    getModel(instrument) {
         switch (instrument) {
             case api.enums.InstrumentEnum.AUD_USD:
-                switch (granularity) {
-                    case api.enums.GranularityEnum.M5:
-                        return api.models.candles.audUsdM5;
-                }
-                break;
+                return api.models.Candles.audUsd;
+            case api.enums.InstrumentEnum.GBP_USD:
+                return api.models.Candles.gbpUsd;
+            case api.enums.InstrumentEnum.EUR_USD:
+                return api.models.Candles.eurUsd;
         }
+        throw new Error(`CandleModel is undefined for ${instrument}`);
     }
-    findTopicName(instrument, granularity) {
-        const audUsdM5Topic = 'audUsdM5';
+    getHeikinAshiModel(instrument) {
         switch (instrument) {
             case api.enums.InstrumentEnum.AUD_USD:
-                switch (granularity) {
-                    case api.enums.GranularityEnum.M5:
-                        return audUsdM5Topic;
-                }
-                break;
+                return api.models.HeikinAshis.audUsd;
+            case api.enums.InstrumentEnum.GBP_USD:
+                return api.models.HeikinAshis.gbpUsd;
+            case api.enums.InstrumentEnum.EUR_USD:
+                return api.models.HeikinAshis.eurUsd;
         }
-        throw new Error('cannot find the topic name!');
+        throw new Error(`HeikinAshiModel is undefined for ${instrument}`);
+    }
+    getLineBreakModel(instrument) {
+        switch (instrument) {
+            case api.enums.InstrumentEnum.AUD_USD:
+                return api.models.LineBreaks.audUsd;
+            case api.enums.InstrumentEnum.GBP_USD:
+                return api.models.LineBreaks.gbpUsd;
+            case api.enums.InstrumentEnum.EUR_USD:
+                return api.models.LineBreaks.eurUsd;
+        }
+        throw new Error(`HeikinAshiModel is undefined for ${instrument}`);
     }
 }
 exports.CandleService = CandleService;

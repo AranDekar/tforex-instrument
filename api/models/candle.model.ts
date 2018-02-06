@@ -1,77 +1,76 @@
 import { Document, Schema, Model, Types } from 'mongoose';
 
-import * as api from '../../api';
+import * as api from 'api';
 
-let mongoose = api.shared.DataAccess.mongooseInstance;
+const mongoose = api.shared.DataAccess.mongooseInstance;
 
 export interface Candle {
-    closeAsk: number;
-    closeBid: number;
+    close: number;
     complete: boolean;
-    highAsk: number;
-    highBid: number;
-    lowAsk: number;
-    lowBid: number;
-    openAsk: number;
-    openBid: number;
+    high: number;
+    low: number;
+    open: number;
     time: string;
     volume: number;
-    isDispatched: Boolean;
+    granularity: string;
 }
 export interface CandleDocument extends api.models.Candle, Document {
 }
-
-let schema = new Schema({
-    closeAsk: { type: Number },
-    closeBid: { type: Number },
-    complete: { type: Boolean },
-    highAsk: { type: Number },
-    highBid: { type: Number },
-    lowAsk: { type: Number },
-    lowBid: { type: Number },
-    openAsk: { type: Number },
-    openBid: { type: Number },
-    volume: { type: Number },
-    time: { type: String },
-    isDispatched: { type: Boolean, default: false },
-});
-
-schema.index({ time: 1 }); // schema level ascending index on time
-
-
 export interface CandleModel extends Model<CandleDocument> {
-    getAllCandles(model: Model<CandleDocument>): Promise<CandleDocument[]>;
-    findLastCandle(model: Model<CandleDocument>): Promise<CandleDocument>;
-    findCandleByTime(model: Model<CandleDocument>, time: string): Promise<CandleDocument>;
-    findUndispatchedCandles(model: Model<CandleDocument>): Promise<CandleDocument[]>;
+    getAllCandles(model: Model<CandleDocument>, granularity: string): Promise<CandleDocument[]>;
+    findLastCandle(model: Model<CandleDocument>, granularity: string): Promise<CandleDocument>;
+    findCandleByTime(model: Model<CandleDocument>, time: string, granularityVal: string): Promise<CandleDocument>;
+    findPrevious(
+        model: Model<CandleDocument>, time: string,
+        granularity: string): Promise<CandleDocument>;
 }
 
-schema.statics.getAllCandles = async (model: Model<CandleDocument>) => {
+const schema = new Schema({
+    close: { type: Number },
+    complete: { type: Boolean },
+    high: { type: Number },
+    low: { type: Number },
+    open: { type: Number },
+    volume: { type: Number },
+    time: { type: String },
+    granularity: { type: String },
+});
+
+schema.index({ granularity: 1, time: 1 }); // schema level ascending index on time
+
+schema.statics.getAllCandles = async (model: Model<CandleDocument>, granularityVal: string) => {
     return model
         .find()
-        .sort({ 'time': 1 })
+        .where({ granularity: granularityVal })
+        .sort({ time: 1 })
         .exec();
 };
 
-schema.statics.findUndispatchedCandles = async (model: Model<CandleDocument>) => {
-    return model
-        .find({ isDispatched: false })
-        .sort({ 'time': -1 })
-        .exec();
-};
-schema.statics.findLastCandle = async (model: Model<CandleDocument>) => {
+schema.statics.findLastCandle = async (model: Model<CandleDocument>, granularityVal: string) => {
     return model
         .findOne()
-        .sort({ 'time': -1 })
+        .where({ granularity: granularityVal })
+        .sort({ time: -1 })
         .exec();
 };
 
-schema.statics.findCandleByTime = async (model: Model<CandleDocument>, time: string) => {
+schema.statics.findCandleByTime = async (model: Model<CandleDocument>, timeVal: string, granularityVal) => {
     return model
-        .findOne({ time: time })
+        .findOne({ time: timeVal, granularity: granularityVal })
         .exec();
 };
 
-export namespace candles {
-    export let audUsdM5 = <CandleModel>mongoose.model<CandleDocument>('audusdm5', schema);
+schema.statics.findPrevious = async (
+    model: Model<CandleDocument>, time: string,
+    granularityVal: string) => {
+    return model
+        .findOne({ granularity: granularityVal, time: { $lt: time } })
+        .sort({ time: -1 })
+        .exec();
+};
+
+export class Candles {
+    public static audUsd = mongoose.model<CandleDocument>('aud-usd-candles', schema) as CandleModel;
+    public static gbpUsd = mongoose.model<CandleDocument>('gbp-usd-candles', schema) as CandleModel;
+    public static eurUsd = mongoose.model<CandleDocument>('eur-usd-candles', schema) as CandleModel;
 }

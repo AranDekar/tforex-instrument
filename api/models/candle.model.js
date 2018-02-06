@@ -1,56 +1,48 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
-const api = require("../../api");
-let mongoose = api.shared.DataAccess.mongooseInstance;
-let schema = new mongoose_1.Schema({
-    closeAsk: { type: Number },
-    closeBid: { type: Number },
+const api = require("api");
+const mongoose = api.shared.DataAccess.mongooseInstance;
+const schema = new mongoose_1.Schema({
+    close: { type: Number },
     complete: { type: Boolean },
-    highAsk: { type: Number },
-    highBid: { type: Number },
-    lowAsk: { type: Number },
-    lowBid: { type: Number },
-    openAsk: { type: Number },
-    openBid: { type: Number },
+    high: { type: Number },
+    low: { type: Number },
+    open: { type: Number },
     volume: { type: Number },
     time: { type: String },
-    isDispatched: { type: Boolean, default: false },
+    granularity: { type: String },
 });
-schema.index({ time: 1 }); // schema level ascending index on time
-schema.statics.getAllCandles = (model) => __awaiter(this, void 0, void 0, function* () {
+schema.index({ granularity: 1, time: 1 }); // schema level ascending index on time
+schema.statics.getAllCandles = async (model, granularityVal) => {
     return model
         .find()
-        .sort({ 'time': 1 })
+        .where({ granularity: granularityVal })
+        .sort({ time: 1 })
         .exec();
-});
-schema.statics.findUndispatchedCandles = (model) => __awaiter(this, void 0, void 0, function* () {
-    return model
-        .find({ isDispatched: false })
-        .sort({ 'time': -1 })
-        .exec();
-});
-schema.statics.findLastCandle = (model) => __awaiter(this, void 0, void 0, function* () {
+};
+schema.statics.findLastCandle = async (model, granularityVal) => {
     return model
         .findOne()
-        .sort({ 'time': -1 })
+        .where({ granularity: granularityVal })
+        .sort({ time: -1 })
         .exec();
-});
-schema.statics.findCandleByTime = (model, time) => __awaiter(this, void 0, void 0, function* () {
+};
+schema.statics.findCandleByTime = async (model, timeVal, granularityVal) => {
     return model
-        .findOne({ time: time })
+        .findOne({ time: timeVal, granularity: granularityVal })
         .exec();
-});
-var candles;
-(function (candles) {
-    candles.audUsdM5 = mongoose.model('audusdm5', schema);
-})(candles = exports.candles || (exports.candles = {}));
+};
+schema.statics.findPrevious = async (model, time, granularityVal) => {
+    return model
+        .findOne({ granularity: granularityVal, time: { $lt: time } })
+        .sort({ time: -1 })
+        .exec();
+};
+class Candles {
+}
+Candles.audUsd = mongoose.model('aud-usd-candles', schema);
+Candles.gbpUsd = mongoose.model('gbp-usd-candles', schema);
+Candles.eurUsd = mongoose.model('eur-usd-candles', schema);
+exports.Candles = Candles;
 //# sourceMappingURL=candle.model.js.map
