@@ -7,6 +7,6 @@ var GranularityEnum;
     GranularityEnum["M30"] = "M30";
     GranularityEnum["H1"] = "H1";
     GranularityEnum["H4"] = "H4";
-    GranularityEnum["D1"] = "D1";
+    GranularityEnum["D"] = "D";
 })(GranularityEnum = exports.GranularityEnum || (exports.GranularityEnum = {}));
 //# sourceMappingURL=granularity.enum.js.map

@@ -34,6 +34,9 @@ export interface HeikinAshiModel extends Model<HeikinAshiDocument> {
     findPrevious(
         model: Model<HeikinAshiDocument>, time: string,
         granularity: string): Promise<HeikinAshiDocument>;
+    findLimit(
+        model: Model<HeikinAshiDocument>, time: string,
+        granularity: string, limit: number): Promise<HeikinAshiDocument[]>;
 }
 
 schema.statics.findPrevious = async (
@@ -42,6 +45,16 @@ schema.statics.findPrevious = async (
     return model
         .findOne({ granularity: granularityVal, time: { $lt: time } })
         .sort({ time: -1 })
+        .exec();
+};
+
+schema.statics.findLimit = async (
+    model: Model<HeikinAshiDocument>, time: string,
+    granularityVal: string, limit: number) => {
+    return model
+        .find({ granularity: granularityVal, time: { $lt: time } })
+        .sort({ time: -1 })
+        .limit(limit)
         .exec();
 };
 

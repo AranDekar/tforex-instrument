@@ -23,6 +23,9 @@ export interface CandleModel extends Model<CandleDocument> {
     findPrevious(
         model: Model<CandleDocument>, time: string,
         granularity: string): Promise<CandleDocument>;
+    findLimit(
+        model: Model<CandleDocument>, time: string,
+        granularity: string, limit: number): Promise<CandleDocument[]>;
 }
 
 const schema = new Schema({
@@ -66,6 +69,16 @@ schema.statics.findPrevious = async (
     return model
         .findOne({ granularity: granularityVal, time: { $lt: time } })
         .sort({ time: -1 })
+        .exec();
+};
+
+schema.statics.findLimit = async (
+    model: Model<CandleDocument>, time: string,
+    granularityVal: string, limit: number) => {
+    return model
+        .find({ granularity: granularityVal, time: { $lt: time } })
+        .sort({ time: -1 })
+        .limit(limit)
         .exec();
 };
 

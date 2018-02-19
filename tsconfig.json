@@ -1,7 +1,7 @@
 {
     "compileOnSave": true,
     "compilerOptions": {
-        "target": "es2017",
+        "target": "es2015",
         "module": "commonjs",
         "moduleResolution": "node",
         "rootDir": ".",
@@ -19,8 +19,8 @@
         "suppressImplicitAnyIndexErrors": true,
         "strictNullChecks": true,
         "lib": [
-            "es2017",
-            "dom",
+            "es2015",
+            // "dom",
             "esnext.asynciterable"
         ],
     },

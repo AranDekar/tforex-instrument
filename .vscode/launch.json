@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch",
+            "name": "Launch Instrument",
             "type": "node",
             "request": "launch",
             "program": "${workspaceFolder}/app.js",
@@ -27,7 +27,7 @@
         {
             "type": "node",
             "request": "attach",
-            "name": "Node: Nodemon",
+            "name": "nodemon-instrument",
             // "processId": "${command:PickProcess}",
             "restart": true,
             "protocol": "inspector",

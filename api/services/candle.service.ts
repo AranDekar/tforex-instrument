@@ -3,7 +3,6 @@ import { Types, Model } from 'mongoose';
 import * as api from '../../api';
 export class CandleService {
 
-
     public async get(instrument: string, granularity: api.enums.GranularityEnum):
         Promise<api.models.CandleDocument[]> {
         const candleModel = this.getModel(api.enums.InstrumentEnum[instrument]);
@@ -43,7 +42,7 @@ export class CandleService {
                 endTime = new Date(endTime.getFullYear(), endTime.getMonth(), endTime.getDate(),
                     endTime.getHours(), endTime.getMinutes() + 480);
                 break;
-            case api.enums.GranularityEnum.D1:
+            case api.enums.GranularityEnum.D:
                 endTime = new Date(endTime.getFullYear(), endTime.getMonth(), endTime.getDate() + 2);
                 break;
         }

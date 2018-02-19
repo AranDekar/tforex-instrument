@@ -1,4 +1,12 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
 const api = require("../../api");
@@ -9,31 +17,24 @@ const schema = new mongoose_1.Schema({
     complete: { type: Boolean },
     volume: { type: Number },
     time: { type: String },
+    granularity: { type: String },
+    color: { type: String, enum: ['white', 'red'] },
+    number: { type: Number },
 });
 schema.index({ time: 1 }); // schema level ascending index on time
-schema.statics.getAllLineBreaks = async (model) => {
+schema.statics.findPrevious = (model, time, granularityVal) => __awaiter(this, void 0, void 0, function* () {
     return model
-        .find()
-        .sort({ time: 1 })
-        .exec();
-};
-schema.statics.findUndispatchedLineBreaks = async (model) => {
-    return model
-        .find({ isDispatched: false })
+        .findOne({ granularity: granularityVal, time: { $lt: time } })
         .sort({ time: -1 })
         .exec();
-};
-schema.statics.findLastLineBreak = async (model) => {
+});
+schema.statics.findLimit = (model, time, granularityVal, limit) => __awaiter(this, void 0, void 0, function* () {
     return model
-        .findOne()
+        .find({ granularity: granularityVal, time: { $lt: time } })
         .sort({ time: -1 })
+        .limit(limit)
         .exec();
-};
-schema.statics.findLineBreakByTime = async (model, time) => {
-    return model
-        .findOne({ time })
-        .exec();
-};
+});
 class LineBreaks {
 }
 LineBreaks.audUsd = mongoose.model('aud-usd-line-break', schema);

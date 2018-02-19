@@ -1,4 +1,4 @@
-let oanda = require('oanda-adapter');
+const oanda = require('oanda-adapter');
 
 import * as api from '../../../api';
 
@@ -13,7 +13,8 @@ export class OandaProxy {
         accessToken: api.shared.Config.settings.oanda_access_token_key,
     });
 
-    public async getCandles(instrument: api.enums.InstrumentEnum,
+    public async getCandles(
+        instrument: api.enums.InstrumentEnum,
         start: string, end: string, granularity: api.enums.GranularityEnum): Promise<any[]> {
         if (api.shared.Config.settings.mockup_oanda) {
             return Promise.resolve(
@@ -32,11 +33,20 @@ export class OandaProxy {
                 }]);
         } else {
             return new Promise<any[]>((resolve, reject) => {
-                this.client.getCandles(api.enums.InstrumentEnum[instrument], start, end, api.enums.GranularityEnum[granularity],
+                this.client.getCandles(api.enums.InstrumentEnum[instrument], start, end,
+                    api.enums.GranularityEnum[granularity],
                     (err, candles) => {
                         if (err) {
                             return reject(err);
                         }
+                        candles.forEach((element) => {
+                            element.high = element.highAsk;
+                            element.low = element.lowAsk;
+                            element.open = element.openAsk;
+                            element.close = element.closeAsk;
+                            element.granularity = granularity;
+                            element.time = element.time / 1000;
+                        });
                         return resolve(candles);
                     });
             });
@@ -47,15 +57,15 @@ export class OandaProxy {
         if (api.shared.Config.settings.mockup_oanda) {
             return Promise.resolve(
                 [{
-                    displayName: "AUD/USD",
+                    displayName: 'AUD/USD',
                     halted: false,
-                    instrument: "AUD_USD",
+                    instrument: 'AUD_USD',
                     marginRate: 0.003333,
                     maxTradeUnits: 10000000,
                     maxTrailingStop: 10000,
                     minTrailingStop: 5,
-                    pip: "0.0001",
-                    precision: "0.00001",
+                    pip: '0.0001',
+                    precision: '0.00001',
                     granularities: [],
                 }]);
         } else {
@@ -70,15 +80,10 @@ export class OandaProxy {
         }
     }
 }
-
-
-
-/**
+/*
  *  this is to test the oanda apis
  * https://tonicdev.com/npm/oanda-adapter
  *
-
-
     var OANDAAdapter= require("oanda-adapter")
     var client = new OANDAAdapter({
         environment: 'practice',
@@ -87,10 +92,9 @@ export class OandaProxy {
             client.getInstruments(7841664,function (err, instruments) {
                 console.log(instruments);
             });
-*
-*
-*
-          client.getCandles("AUD_USD","2015-12-15T02:50:00+00:00","2015-12-15T02:55:00+00:00","M5",function (err, data) {
+
+          client.getCandles("AUD_USD","2015-12-15T02:50:00+00:00","2015-12-15T02:55:00+00:00","M5",
+          function (err, data) {
               console.log(data);
           });
 

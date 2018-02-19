@@ -1,8 +1,16 @@
 import { Types, Model } from 'mongoose';
 import * as request from 'request';
+// const talib = require('talib/build/Release/talib');
+// console.log('TALIB version: ' + talib.version);
 
+// const tulind = require('tulind/lib/binding/Release/node-v59-darwin-x64/tulind');
+import * as tulind from 'tulind';
 import * as api from 'api';
+
 import { InstrumentEvent, CandleModel, HeikinAshiModel, LineBreakModel } from 'api/models';
+
+console.log('TULIND version: ' + tulind.version);
+
 (Symbol as any).asyncIterator = Symbol.asyncIterator || Symbol.for('Symbol.asyncIterator');
 export class InstrumentEventProducerService {
     private candleModel: CandleModel;
@@ -24,42 +32,26 @@ export class InstrumentEventProducerService {
         const lastCandles = await this.candleModel.find({ time: { $gt: lastEvent.time } });
         const arrayOfEvents: InstrumentEvent[] = [];
         for (const currCandle of lastCandles) {
+            for await (const event of this.raiseEvents(currCandle)) {
+                arrayOfEvents.push(event);
+            }
             // process candle and provide event
             switch (currCandle.granularity) {
                 case api.enums.GranularityEnum.M5:
-                    for await (const event of this.raiseM5Events(currCandle)) {
-                        arrayOfEvents.push(event);
-                    }
                     break;
                 case api.enums.GranularityEnum.M15:
-                    for await (const event of this.raiseM15Events(currCandle)) {
-                        arrayOfEvents.push(event);
-                    }
                     break;
                 case api.enums.GranularityEnum.M30:
-                    for await (const event of this.raiseM30Events(currCandle)) {
-                        arrayOfEvents.push(event);
-                    }
                     break;
                 case api.enums.GranularityEnum.H1:
-                    for await (const event of this.raiseH1Events(currCandle)) {
-                        arrayOfEvents.push(event);
-                    }
                     break;
                 case api.enums.GranularityEnum.H4:
-                    for await (const event of this.raiseH4Events(currCandle)) {
-                        arrayOfEvents.push(event);
-                    }
                     break;
-                case api.enums.GranularityEnum.D1:
-                    for await (const event of this.raiseD1Events(currCandle)) {
-                        arrayOfEvents.push(event);
-                    }
+                case api.enums.GranularityEnum.D:
                     break;
             }
         }
         await instrumentEventModel.create(arrayOfEvents);
-
     }
     public async publishNewEvents(instrument: api.enums.InstrumentEnum) {
         const instrumentEventModel = this.getInstrumentEventModel(instrument);
@@ -90,79 +82,28 @@ export class InstrumentEventProducerService {
         return (`${instrument}-${granularity}`);
     }
 
-    private async * raiseM5Events(candle: api.models.CandleDocument) {
+    private async * raiseEvents(candle: api.models.CandleDocument) {
+        yield* this.raiseCandle(candle);
+        yield* this.raiseHeikinAshi(candle);
+        yield* this.raiseLineBreak(candle);
+    }
+
+    private async * raiseCandle(candle: api.models.CandleDocument) {
         yield {
-            event: 'm5-closed',
+            event: `${candle.granularity}-closed`,
             time: new Date().toISOString(),
             candleTime: candle.time,
             isDispatched: false,
             payload: candle,
         };
-        yield* this.calculateHeikinAshi(candle);
-        yield* this.calculateLineBreak(candle);
+        yield* this.raiseSma(candle, 20);
+        yield* this.raiseSma(candle, 50);
+        yield* this.raiseEma(candle, 20);
+        yield* this.raiseEma(candle, 50);
+        yield* this.raiseMacd(candle);
     }
 
-    private async * raiseM15Events(candle: api.models.CandleDocument) {
-        yield {
-            event: 'm15-closed',
-            time: new Date().toISOString(),
-            candleTime: candle.time,
-            isDispatched: false,
-            payload: candle,
-        };
-        yield* this.calculateHeikinAshi(candle);
-        yield* this.calculateLineBreak(candle);
-    }
-
-    private async * raiseM30Events(candle: api.models.CandleDocument) {
-        yield {
-            event: 'm30-closed',
-            time: new Date().toISOString(),
-            candleTime: candle.time,
-            isDispatched: false,
-            payload: candle,
-        };
-        yield* this.calculateHeikinAshi(candle);
-        yield* this.calculateLineBreak(candle);
-    }
-
-    private async * raiseH1Events(candle: api.models.CandleDocument) {
-        yield {
-            event: 'h1-closed',
-            time: new Date().toISOString(),
-            candleTime: candle.time,
-            isDispatched: false,
-            payload: candle,
-        };
-        yield* this.calculateHeikinAshi(candle);
-        yield* this.calculateLineBreak(candle);
-    }
-
-    private async * raiseH4Events(candle: api.models.CandleDocument) {
-        yield {
-            event: 'h4-closed',
-            time: new Date().toISOString(),
-            candleTime: candle.time,
-            isDispatched: false,
-            payload: candle,
-        };
-        yield* this.calculateHeikinAshi(candle);
-        yield* this.calculateLineBreak(candle);
-    }
-
-    private async * raiseD1Events(candle: api.models.CandleDocument) {
-        yield {
-            event: 'd1-closed',
-            time: new Date().toISOString(),
-            candleTime: candle.time,
-            isDispatched: false,
-            payload: candle,
-        };
-        yield* this.calculateHeikinAshi(candle);
-        yield* this.calculateLineBreak(candle);
-    }
-
-    private async * calculateHeikinAshi(candle: api.models.CandleDocument) {
+    private async * raiseHeikinAshi(candle: api.models.CandleDocument) {
         const xPrevious = await this.heikinAshiModel.findPrevious(
             this.heikinAshiModel,
             candle.time, candle.granularity);
@@ -192,29 +133,29 @@ export class InstrumentEventProducerService {
             isDispatched: false,
             payload: newLocal,
         };
+        yield* this.raiseSmaHeikinAshi(candle, 20);
+        yield* this.raiseSmaHeikinAshi(candle, 50);
+        yield* this.raiseEmaHeikinAshi(candle, 20);
+        yield* this.raiseEmaHeikinAshi(candle, 50);
     }
 
-    private async * calculateLineBreak(candle: api.models.CandleDocument) {
-        const xLine = await this.lineBreakModel.findPrevious(
-            this.lineBreakModel,
-            candle.time, candle.granularity);
-        const xxLine = await this.lineBreakModel.findPrevious(
-            this.lineBreakModel,
-            xLine.time, xLine.granularity);
-        const xxxLine = await this.lineBreakModel.findPrevious(
-            this.lineBreakModel,
-            xxLine.time, xxLine.granularity);
+    private async * raiseLineBreak(candle: api.models.CandleDocument) {
 
-        const bottom = Math.min(xLine.open, xLine.close, xxLine.open,
-            xxLine.close, xxxLine.open, xxxLine.close);
-        const top = Math.max(xLine.open, xLine.close, xxLine.open,
-            xxLine.close, xxxLine.open, xxxLine.close);
+        const xLines = await this.lineBreakModel.findLimit(
+            this.lineBreakModel,
+            candle.time, candle.granularity, 3);
+
+        const closes = xLines.map((x) => x.close);
+        const opens = xLines.map((x) => x.open);
+
+        const bottom = Math.min(...opens, ...closes);
+        const top = Math.max(...opens, ...closes);
 
         let newLocal: any;
         if (candle.close > top) {
             // new line in white
-            const xOpen = xLine.color === 'white' ? xLine.close : xLine.open;
-            const xNumber = xLine.color === 'white' ? xLine.number + 1 : 1;
+            const xOpen = xLines[0].color === 'white' ? xLines[0].close : xLines[0].open;
+            const xNumber = xLines[0].color === 'white' ? xLines[0].number + 1 : 1;
             newLocal = {
                 open: xOpen,
                 number: xNumber,
@@ -227,8 +168,8 @@ export class InstrumentEventProducerService {
             };
         } else if (candle.close < bottom) {
             // new line in red
-            const xOpen = xLine.color === 'red' ? xLine.close : xLine.open;
-            const xNumber = xLine.color === 'red' ? xLine.number + 1 : 1;
+            const xOpen = xLines[0].color === 'red' ? xLines[0].close : xLines[0].open;
+            const xNumber = xLines[0].color === 'red' ? xLines[0].number + 1 : 1;
             newLocal = {
                 open: xOpen,
                 number: xNumber,
@@ -253,5 +194,137 @@ export class InstrumentEventProducerService {
             isDispatched: false,
             payload: newLocal,
         };
+        yield* this.raiseSmaLineBreak(candle, 20);
+        yield* this.raiseSmaLineBreak(candle, 50);
+        yield* this.raiseEmaLineBreak(candle, 20);
+        yield* this.raiseEmaLineBreak(candle, 50);
+    }
+    private async * raiseMacd(candle: api.models.CandleDocument) {
+
+        const xCandles = await this.candleModel.findLimit(
+            this.candleModel,
+            candle.time, candle.granularity, 40);
+
+        const closes = xCandles.map((x) => x.close).concat(candle.close);
+        // tslint:disable-next-line:space-before-function-paren
+        yield* tulind.indicators.macd.indicator([closes], [12], [26], [9], async function* (err, results) {
+            yield {
+                event: `${candle.granularity}-macd-changed`,
+                time: new Date().toISOString(),
+                candleTime: candle.time,
+                isDispatched: false,
+                payload: { result: results[0] },
+            };
+        });
+    }
+
+    private async * raiseSma(candle: api.models.CandleDocument, period) {
+
+        const xCandles = await this.candleModel.findLimit(
+            this.candleModel,
+            candle.time, candle.granularity, period);
+
+        const closes = xCandles.map((x) => x.close).concat(candle.close);
+        // tslint:disable-next-line:space-before-function-paren
+        yield* tulind.indicators.sma.indicator([closes], [period], async function* (err, results) {
+            yield {
+                event: `${candle.granularity}-sma-changed`,
+                time: new Date().toISOString(),
+                candleTime: candle.time,
+                isDispatched: false,
+                payload: { result: results[0], period },
+            };
+        });
+    }
+    private async * raiseEma(candle: api.models.CandleDocument, period) {
+
+        const xCandles = await this.candleModel.findLimit(
+            this.candleModel,
+            candle.time, candle.granularity, period);
+
+        const closes = xCandles.map((x) => x.close).concat(candle.close);
+        // tslint:disable-next-line:space-before-function-paren
+        yield* tulind.indicators.ema.indicator([closes], [period], async function* (err, results) {
+            yield {
+                event: `${candle.granularity}-ema-changed`,
+                time: new Date().toISOString(),
+                candleTime: candle.time,
+                isDispatched: false,
+                payload: { result: results[0], period },
+            };
+        });
+    }
+
+    private async * raiseSmaHeikinAshi(candle: api.models.CandleDocument, period) {
+
+        const xCandles = await this.heikinAshiModel.findLimit(
+            this.heikinAshiModel,
+            candle.time, candle.granularity, period);
+
+        const closes = xCandles.map((x) => x.close).concat(candle.close);
+        // tslint:disable-next-line:space-before-function-paren
+        yield* tulind.indicators.sma.indicator([closes], [period], async function* (err, results) {
+            yield {
+                event: `${candle.granularity}-heikin-ashi-sma-changed`,
+                time: new Date().toISOString(),
+                candleTime: candle.time,
+                isDispatched: false,
+                payload: { result: results[0], period },
+            };
+        });
+    }
+    private async * raiseEmaHeikinAshi(candle: api.models.CandleDocument, period) {
+
+        const xCandles = await this.heikinAshiModel.findLimit(
+            this.heikinAshiModel,
+            candle.time, candle.granularity, period);
+
+        const closes = xCandles.map((x) => x.close).concat(candle.close);
+        // tslint:disable-next-line:space-before-function-paren
+        yield* tulind.indicators.ema.indicator([closes], [period], async function* (err, results) {
+            yield {
+                event: `${candle.granularity}-heikin-ashi-ema-changed`,
+                time: new Date().toISOString(),
+                candleTime: candle.time,
+                isDispatched: false,
+                payload: { result: results[0], period },
+            };
+        });
+    }
+    private async * raiseSmaLineBreak(candle: api.models.CandleDocument, period) {
+
+        const xCandles = await this.lineBreakModel.findLimit(
+            this.lineBreakModel,
+            candle.time, candle.granularity, period);
+
+        const closes = xCandles.map((x) => x.close).concat(candle.close);
+        // tslint:disable-next-line:space-before-function-paren
+        yield* tulind.indicators.sma.indicator([closes], [period], async function* (err, results) {
+            yield {
+                event: `${candle.granularity}-line-break-sma-changed`,
+                time: new Date().toISOString(),
+                candleTime: candle.time,
+                isDispatched: false,
+                payload: { result: results[0], period },
+            };
+        });
+    }
+    private async * raiseEmaLineBreak(candle: api.models.CandleDocument, period) {
+
+        const xCandles = await this.lineBreakModel.findLimit(
+            this.lineBreakModel,
+            candle.time, candle.granularity, period);
+
+        const closes = xCandles.map((x) => x.close).concat(candle.close);
+        // tslint:disable-next-line:space-before-function-paren
+        yield* tulind.indicators.sma.indicator([closes], [period], async function* (err, results) {
+            yield {
+                event: `${candle.granularity}-line-break-sma-changed`,
+                time: new Date().toISOString(),
+                candleTime: candle.time,
+                isDispatched: false,
+                payload: { result: results[0], period },
+            };
+        });
     }
 }

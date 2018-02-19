@@ -31,40 +31,13 @@ const schema = new Schema({
 schema.index({ time: 1 }); // schema level ascending index on time
 
 export interface LineBreakModel extends Model<LineBreakDocument> {
-    getAllLineBreaks(model: Model<LineBreakDocument>): Promise<LineBreakDocument[]>;
-    findLastLineBreak(model: Model<LineBreakDocument>): Promise<LineBreakDocument>;
-    findLineBreakByTime(model: Model<LineBreakDocument>, time: string): Promise<LineBreakDocument>;
-    findUndispatchedLineBreaks(model: Model<LineBreakDocument>): Promise<LineBreakDocument[]>;
+    findLimit(
+        model: Model<LineBreakDocument>, time: string,
+        granularity: string, limit: number): Promise<LineBreakDocument[]>;
     findPrevious(
         model: Model<LineBreakDocument>, time: string,
         granularity: string): Promise<LineBreakDocument>;
 }
-
-schema.statics.getAllLineBreaks = async (model: Model<LineBreakDocument>) => {
-    return model
-        .find()
-        .sort({ time: 1 })
-        .exec();
-};
-
-schema.statics.findUndispatchedLineBreaks = async (model: Model<LineBreakDocument>) => {
-    return model
-        .find({ isDispatched: false })
-        .sort({ time: -1 })
-        .exec();
-};
-schema.statics.findLastLineBreak = async (model: Model<LineBreakDocument>) => {
-    return model
-        .findOne()
-        .sort({ time: -1 })
-        .exec();
-};
-
-schema.statics.findLineBreakByTime = async (model: Model<LineBreakDocument>, time: string) => {
-    return model
-        .findOne({ time })
-        .exec();
-};
 
 schema.statics.findPrevious = async (
     model: Model<LineBreakDocument>, time: string,
@@ -72,6 +45,16 @@ schema.statics.findPrevious = async (
     return model
         .findOne({ granularity: granularityVal, time: { $lt: time } })
         .sort({ time: -1 })
+        .exec();
+};
+
+schema.statics.findLimit = async (
+    model: Model<LineBreakDocument>, time: string,
+    granularityVal: string, limit: number) => {
+    return model
+        .find({ granularity: granularityVal, time: { $lt: time } })
+        .sort({ time: -1 })
+        .limit(limit)
         .exec();
 };
 export class LineBreaks { // they work only on daily basis

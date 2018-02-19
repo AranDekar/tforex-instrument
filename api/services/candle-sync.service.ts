@@ -14,7 +14,7 @@ export class CandleSyncService {
             api.enums.GranularityEnum.M30,
             api.enums.GranularityEnum.H1,
             api.enums.GranularityEnum.H4,
-            api.enums.GranularityEnum.D1,
+            api.enums.GranularityEnum.D,
         ];
         const proxy = new api.proxies.OandaProxy();
         const candleService = new api.services.CandleService();
@@ -42,12 +42,11 @@ export class CandleSyncService {
                     instrument,
                     this.startTime, this.endTime,
                     currGranularity);
-                allCandles.push(candles);
+                allCandles.push(...candles);
             } while (stillInLoop);
         }
-        const completedCandles = allCandles.filter((x) => x.completed);
+        const completedCandles = allCandles.filter((x) => x.complete);
         const sortedCompletedCandles = completedCandles.sort((a, b) => a.time - b.time);
-        sortedCompletedCandles.forEach((x) => x.time = x.time / 1000);
 
         await candleModel.create(sortedCompletedCandles);
 
@@ -71,38 +70,44 @@ export class CandleSyncService {
             switch (granularity) {
                 case api.enums.GranularityEnum.M5:
                     if (!this.endTime) {
-                        startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 1, 0);
+                        // startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 1, 0);
+                        startTime = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() - 1);
                         // 1 months data for M5
                     }
                     break;
                 case api.enums.GranularityEnum.M15:
                     if (!this.endTime) {
-                        startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 3, 0);
+                        // startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 3, 0);
+                        startTime = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() - 3);
                         // 3 months data for M15
                     }
                     break;
                 case api.enums.GranularityEnum.M30:
                     if (!this.endTime) {
-                        startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 6, 0);
+                        // startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 6, 0);
+                        startTime = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() - 6);
                         // 6 months data for M30
                     }
                     break;
                 case api.enums.GranularityEnum.H1:
                     if (!this.endTime) {
-                        startTime = new Date(startTime.getFullYear() - 1, startTime.getMonth(), 0);
+                        // startTime = new Date(startTime.getFullYear() - 1, startTime.getMonth(), 0);
+                        startTime = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() - 12);
                         // 1 year data for H1
                     }
                     break;
                 case api.enums.GranularityEnum.H4:
                     if (!this.endTime) {
-                        startTime = new Date(startTime.getFullYear() - 4, startTime.getMonth(), 0);
+                        // startTime = new Date(startTime.getFullYear() - 4, startTime.getMonth(), 0);
+                        startTime = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() - 48);
                         // 4 years data for H4
                     }
                     break;
-                case api.enums.GranularityEnum.D1:
+                case api.enums.GranularityEnum.D:
                     if (!this.endTime) {
-                        startTime = new Date(startTime.getFullYear() - 10, startTime.getMonth(), 0);
-                        // 10 years data for H1
+                        // startTime = new Date(startTime.getFullYear() - 10, startTime.getMonth(), 0);
+                        startTime = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() - 288);
+                        // 10 years data for D1
                     }
                     break;
             }
@@ -133,7 +138,7 @@ export class CandleSyncService {
                 // 720 days for H4, 6 candles per day
                 endTime = new Date(endTime.getFullYear(), endTime.getMonth(), endTime.getDate() + 720);
                 break;
-            case api.enums.GranularityEnum.D1:
+            case api.enums.GranularityEnum.D:
                 // 4320 days for D1, 1 candle per day
                 endTime = new Date(endTime.getFullYear(), endTime.getMonth(), endTime.getDate() + 4320);
                 break;

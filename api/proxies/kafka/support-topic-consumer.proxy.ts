@@ -16,6 +16,7 @@ export class SupportTopicConsumerProxy {
         console.log(`trying to connect to ${api.shared.Config.settings.kafka_conn_string} in consumer`);
         const client = new kafka.KafkaClient({
             kafkaHost: api.shared.Config.settings.kafka_conn_string,
+            requestTimeout: 180000,
         });
 
         this.consumer = new kafka.Consumer(
@@ -49,20 +50,8 @@ export class SupportTopicConsumerProxy {
                             break;
                         case importCandles:
                             lock.acquire(key, async () => {
-                                const instrumentService = new api.services.InstrumentService();
-
-                                const instrumentItem = await instrumentService.get(item.instrument);
-                                if (instrumentItem[0] && item.granularity) {
-                                    if (instrumentItem[0].granularities.indexOf(item.granularity) === -1) {
-                                        instrumentItem[0].granularities.push(item.granularity);
-                                        await instrumentItem[0].save();
-                                    }
-
-                                    const service = new api.services.CandleSyncService();
-                                    await service.sync(item.instrument);
-                                } else {
-                                    throw new Error('instrument is not imported!');
-                                }
+                                const service = new api.services.CandleSyncService();
+                                await service.sync(item.instrument);
                                 return;
                             }, opts).then(() => {
                                 console.log('lock released');
@@ -106,4 +95,4 @@ export class SupportTopicConsumerProxy {
 setTimeout(async () => {
     const prx = new SupportTopicConsumerProxy();
     prx.connect();
-}, 5000);
+}, 20000);

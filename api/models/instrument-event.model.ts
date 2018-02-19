@@ -56,14 +56,14 @@ const schema = new Schema({
             'm5-line-break-macd-changed', 'm15-line-break-macd-changed', 'm30-line-break-macd-changed',
             'h1-line-break-macd-changed', 'h4-line-break-macd-changed', 'd1-line-break-macd-changed',
 
-            'm5-ma-changed', 'm15-ma-changed', 'm30-ma-changed', 'h1-ma-changed', 'h4-ma-changed',
-            'd1-ma-changed',
+            'm5-sma-changed', 'm15-sma-changed', 'm30-sma-changed', 'h1-sma-changed', 'h4-sma-changed',
+            'd1-sma-changed',
 
-            'm5-heikin-ashi-ma-changed', 'm15-heikin-ashi-ma-changed', 'm30-heikin-ashi-ma-changed',
-            'h1-heikin-ashi-ma-changed', 'h4-heikin-ashi-ma-changed', 'd1-heikin-ashi-ma-changed',
+            'm5-heikin-ashi-sma-changed', 'm15-heikin-ashi-sma-changed', 'm30-heikin-ashi-sma-changed',
+            'h1-heikin-ashi-sma-changed', 'h4-heikin-ashi-sma-changed', 'd1-heikin-ashi-sma-changed',
 
-            'm5-line-break-ma-changed', 'm15-line-break-ma-changed', 'm30-line-break-ma-changed',
-            'h1-line-break-ma-changed', 'h4-line-break-ma-changed', 'd1-line-break-ma-changed',
+            'm5-line-break-sma-changed', 'm15-line-break-sma-changed', 'm30-line-break-sma-changed',
+            'h1-line-break-sma-changed', 'h4-line-break-sma-changed', 'd1-line-break-sma-changed',
 
             'm5-ema-changed', 'm15-ema-changed', 'm30-ema-changed', 'h1-ema-changed', 'h4-ema-changed',
             'd1-ema-changed',
