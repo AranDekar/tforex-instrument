@@ -52,7 +52,7 @@ schema.statics.findLimit = async (
     model: Model<HeikinAshiDocument>, time: string,
     granularityVal: string, limit: number) => {
     return model
-        .find({ granularity: granularityVal, time: { $lt: time } })
+        .find({ granularity: granularityVal, time: { $lte: time } })
         .sort({ time: -1 })
         .limit(limit)
         .exec();

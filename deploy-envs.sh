@@ -1,6 +1,6 @@
 #!/bin/bash
 # set environment variables used in deploy.sh and AWS task-definition.json:
-export IMAGE_NAME=tforex-instrument
+export IMAGE_NAME=tss-instrument
 export IMAGE_VERSION=latest
 
 export AWS_DEFAULT_REGION=us-east-1

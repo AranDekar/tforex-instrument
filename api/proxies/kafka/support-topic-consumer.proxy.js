@@ -83,6 +83,10 @@ class SupportTopicConsumerProxy {
         }));
         this.consumer.on('error', (err) => {
             console.log(err);
+            setTimeout(() => __awaiter(this, void 0, void 0, function* () {
+                const prx = new SupportTopicConsumerProxy();
+                prx.connect();
+            }), 5000);
         });
     }
     resetOffset() {
@@ -93,5 +97,5 @@ exports.SupportTopicConsumerProxy = SupportTopicConsumerProxy;
 setTimeout(() => __awaiter(this, void 0, void 0, function* () {
     const prx = new SupportTopicConsumerProxy();
     prx.connect();
-}), 20000);
+}), 1000);
 //# sourceMappingURL=support-topic-consumer.proxy.js.map

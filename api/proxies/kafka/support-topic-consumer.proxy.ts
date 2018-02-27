@@ -85,6 +85,11 @@ export class SupportTopicConsumerProxy {
 
         this.consumer.on('error', (err: string) => {
             console.log(err);
+
+            setTimeout(async () => {
+                const prx = new SupportTopicConsumerProxy();
+                prx.connect();
+            }, 5000);
         });
     }
     public resetOffset() {
@@ -95,4 +100,4 @@ export class SupportTopicConsumerProxy {
 setTimeout(async () => {
     const prx = new SupportTopicConsumerProxy();
     prx.connect();
-}, 20000);
+}, 1000);

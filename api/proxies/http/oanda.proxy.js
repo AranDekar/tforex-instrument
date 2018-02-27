@@ -45,10 +45,12 @@ class OandaProxy {
                             return reject(err);
                         }
                         candles.forEach((element) => {
-                            element.high = element.highAsk;
-                            element.low = element.lowAsk;
-                            element.open = element.openAsk;
-                            element.close = element.closeAsk;
+                            element.high = Number(((element.highAsk + element.highBid) / 2).toFixed(5));
+                            element.low = Number(((element.lowAsk + element.lowBid) / 2).toFixed(5));
+                            element.open = Number(((element.openAsk + element.openBid) / 2).toFixed(5));
+                            element.closeMid = Number(((element.closeAsk + element.closeBid) / 2).toFixed(5));
+                            element.closeAsk = Number(element.closeAsk.toFixed(5));
+                            element.closeBid = Number(element.closeBid.toFixed(5));
                             element.granularity = granularity;
                             element.time = element.time / 1000;
                         });

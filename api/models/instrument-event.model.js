@@ -62,7 +62,7 @@ schema.statics.findUndispatchedEvents = (model) => __awaiter(this, void 0, void 
         .sort({ time: 1 })
         .exec();
 });
-schema.statics.findLastEvents = (model) => __awaiter(this, void 0, void 0, function* () {
+schema.statics.findLastEvent = (model) => __awaiter(this, void 0, void 0, function* () {
     return model
         .findOne()
         .sort({ time: -1 })

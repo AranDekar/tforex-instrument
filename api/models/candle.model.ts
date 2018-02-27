@@ -5,7 +5,9 @@ import * as api from 'api';
 const mongoose = api.shared.DataAccess.mongooseInstance;
 
 export interface Candle {
-    close: number;
+    closeMid: number;
+    closeAsk: number;
+    closeBid: number;
     complete: boolean;
     high: number;
     low: number;
@@ -29,7 +31,9 @@ export interface CandleModel extends Model<CandleDocument> {
 }
 
 const schema = new Schema({
-    close: { type: Number },
+    closeMid: { type: Number },
+    closeAsk: { type: Number },
+    closeBid: { type: Number },
     complete: { type: Boolean },
     high: { type: Number },
     low: { type: Number },
@@ -76,7 +80,7 @@ schema.statics.findLimit = async (
     model: Model<CandleDocument>, time: string,
     granularityVal: string, limit: number) => {
     return model
-        .find({ granularity: granularityVal, time: { $lt: time } })
+        .find({ granularity: granularityVal, time: { $lte: time } })
         .sort({ time: -1 })
         .limit(limit)
         .exec();

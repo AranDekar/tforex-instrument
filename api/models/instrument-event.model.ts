@@ -88,7 +88,7 @@ schema.statics.findUndispatchedEvents = async (model: Model<InstrumentEventDocum
         .sort({ time: 1 })
         .exec();
 };
-schema.statics.findLastEvents = async (model: Model<InstrumentEventDocument>) => {
+schema.statics.findLastEvent = async (model: Model<InstrumentEventDocument>) => {
     return model
         .findOne()
         .sort({ time: -1 })

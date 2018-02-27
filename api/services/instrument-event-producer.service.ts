@@ -16,6 +16,9 @@ export class InstrumentEventProducerService {
     private candleModel: CandleModel;
     private heikinAshiModel: HeikinAshiModel;
     private lineBreakModel: LineBreakModel;
+
+    private toFix = (num: number) => Number(num.toFixed(5));
+
     /*
     / candles are the source for this class, so when this class is used,
     / it works based on the existing candles in the DB, and then it provides events
@@ -29,7 +32,12 @@ export class InstrumentEventProducerService {
         const instrumentEventModel = this.getInstrumentEventModel(instrument);
 
         const lastEvent: api.models.InstrumentEvent = await instrumentEventModel.findLastEvent(instrumentEventModel);
-        const lastCandles = await this.candleModel.find({ time: { $gt: lastEvent.time } });
+        let lastCandles;
+        if (lastEvent) {
+            lastCandles = await this.candleModel.find({ time: { $gt: lastEvent.time } }).sort({ time: 1 });
+        } else {
+            lastCandles = await this.candleModel.find().sort({ time: 1 });
+        }
         const arrayOfEvents: InstrumentEvent[] = [];
         for (const currCandle of lastCandles) {
             for await (const event of this.raiseEvents(currCandle)) {
@@ -82,7 +90,7 @@ export class InstrumentEventProducerService {
         return (`${instrument}-${granularity}`);
     }
 
-    private async * raiseEvents(candle: api.models.CandleDocument) {
+    private async * raiseEvents(candle: api.models.CandleDocument): AsyncIterableIterator<InstrumentEvent> {
         yield* this.raiseCandle(candle);
         yield* this.raiseHeikinAshi(candle);
         yield* this.raiseLineBreak(candle);
@@ -108,8 +116,8 @@ export class InstrumentEventProducerService {
             this.heikinAshiModel,
             candle.time, candle.granularity);
 
-        const xClose = (candle.open + candle.close + candle.high + candle.low) / 4;
-        const xOpen = (xPrevious.open + xPrevious.close) / 2;
+        const xClose = this.toFix((candle.open + candle.closeMid + candle.high + candle.low) / 4);
+        const xOpen = xPrevious ? this.toFix((xPrevious.open + xPrevious.close) / 2) : xClose;
         const xHigh = Math.max(candle.high, xOpen, xClose);
         const xLow = Math.min(candle.low, xOpen, xClose);
 
@@ -140,50 +148,63 @@ export class InstrumentEventProducerService {
     }
 
     private async * raiseLineBreak(candle: api.models.CandleDocument) {
+        let newLocal: any;
 
         const xLines = await this.lineBreakModel.findLimit(
             this.lineBreakModel,
             candle.time, candle.granularity, 3);
-
-        const closes = xLines.map((x) => x.close);
-        const opens = xLines.map((x) => x.open);
-
-        const bottom = Math.min(...opens, ...closes);
-        const top = Math.max(...opens, ...closes);
-
-        let newLocal: any;
-        if (candle.close > top) {
+        if (xLines.length === 0) {
             // new line in white
-            const xOpen = xLines[0].color === 'white' ? xLines[0].close : xLines[0].open;
-            const xNumber = xLines[0].color === 'white' ? xLines[0].number + 1 : 1;
             newLocal = {
-                open: xOpen,
-                number: xNumber,
-                close: candle.close,
+                open: candle.open,
+                number: 1,
+                close: candle.closeMid,
                 complete: candle.complete,
                 time: candle.time,
                 volume: candle.volume,
                 granularity: candle.granularity,
-                color: 'white',
+                color: candle.closeMid > candle.open ? 'white' : 'red',
             };
-        } else if (candle.close < bottom) {
-            // new line in red
-            const xOpen = xLines[0].color === 'red' ? xLines[0].close : xLines[0].open;
-            const xNumber = xLines[0].color === 'red' ? xLines[0].number + 1 : 1;
-            newLocal = {
-                open: xOpen,
-                number: xNumber,
-                close: candle.close,
-                complete: candle.complete,
-                time: candle.time,
-                volume: candle.volume,
-                granularity: candle.granularity,
-                color: 'red',
-            };
-        }
-        else {
-            // do nothing
-            return;
+        } else {
+            const closes = xLines.map((x) => x.close);
+            const opens = xLines.map((x) => x.open);
+
+            const bottom = Math.min(...opens, ...closes);
+            const top = Math.max(...opens, ...closes);
+
+            if (candle.closeMid > top) {
+                // new line in white
+                const xOpen = xLines[0].color === 'white' ? xLines[0].close : xLines[0].open;
+                const xNumber = xLines[0].color === 'white' ? xLines[0].number + 1 : 1;
+                newLocal = {
+                    open: xOpen,
+                    number: xNumber,
+                    close: candle.closeMid,
+                    complete: candle.complete,
+                    time: candle.time,
+                    volume: candle.volume,
+                    granularity: candle.granularity,
+                    color: 'white',
+                };
+            } else if (candle.closeMid < bottom) {
+                // new line in red
+                const xOpen = xLines[0].color === 'red' ? xLines[0].close : xLines[0].open;
+                const xNumber = xLines[0].color === 'red' ? xLines[0].number + 1 : 1;
+                newLocal = {
+                    open: xOpen,
+                    number: xNumber,
+                    close: candle.closeMid,
+                    complete: candle.complete,
+                    time: candle.time,
+                    volume: candle.volume,
+                    granularity: candle.granularity,
+                    color: 'red',
+                };
+            }
+            else {
+                // do nothing
+                return;
+            }
         }
         const model = new this.lineBreakModel(newLocal);
         await model.save();
@@ -205,16 +226,27 @@ export class InstrumentEventProducerService {
             this.candleModel,
             candle.time, candle.granularity, 40);
 
-        const closes = xCandles.map((x) => x.close).concat(candle.close);
+        const closes = xCandles.map((x) => x.closeMid);
+
+        if (closes.length < 26) {
+            return;
+        }
         // tslint:disable-next-line:space-before-function-paren
-        yield* tulind.indicators.macd.indicator([closes], [12], [26], [9], async function* (err, results) {
-            yield {
-                event: `${candle.granularity}-macd-changed`,
-                time: new Date().toISOString(),
-                candleTime: candle.time,
-                isDispatched: false,
-                payload: { result: results[0] },
-            };
+        yield new Promise<InstrumentEvent>((resolve) => {
+
+            tulind.indicators.macd.indicator([closes], [12, 26, 9], (err, results) => {
+                resolve({
+                    event: `${candle.granularity}-macd-changed`,
+                    time: new Date().toISOString(),
+                    candleTime: candle.time,
+                    isDispatched: false,
+                    payload: {
+                        macd: this.toFix(results[0][results[0].length - 1]),
+                        macd_signal: this.toFix(results[1][results[1].length - 1]),
+                        macd_histogram: this.toFix(results[2][results[2].length - 1]),
+                    },
+                });
+            });
         });
     }
 
@@ -224,16 +256,21 @@ export class InstrumentEventProducerService {
             this.candleModel,
             candle.time, candle.granularity, period);
 
-        const closes = xCandles.map((x) => x.close).concat(candle.close);
+        const closes = xCandles.map((x) => x.closeMid);
+        if (closes.length < period) {
+            return;
+        }
         // tslint:disable-next-line:space-before-function-paren
-        yield* tulind.indicators.sma.indicator([closes], [period], async function* (err, results) {
-            yield {
-                event: `${candle.granularity}-sma-changed`,
-                time: new Date().toISOString(),
-                candleTime: candle.time,
-                isDispatched: false,
-                payload: { result: results[0], period },
-            };
+        yield new Promise<InstrumentEvent>((resolve) => {
+            tulind.indicators.sma.indicator([closes], [period], (err, results) => {
+                resolve({
+                    event: `${candle.granularity}-sma-changed`,
+                    time: new Date().toISOString(),
+                    candleTime: candle.time,
+                    isDispatched: false,
+                    payload: { result: this.toFix(results[0][results[0].length - 1]), period },
+                });
+            });
         });
     }
     private async * raiseEma(candle: api.models.CandleDocument, period) {
@@ -242,16 +279,19 @@ export class InstrumentEventProducerService {
             this.candleModel,
             candle.time, candle.granularity, period);
 
-        const closes = xCandles.map((x) => x.close).concat(candle.close);
+        const closes = xCandles.map((x) => x.closeMid);
         // tslint:disable-next-line:space-before-function-paren
-        yield* tulind.indicators.ema.indicator([closes], [period], async function* (err, results) {
-            yield {
-                event: `${candle.granularity}-ema-changed`,
-                time: new Date().toISOString(),
-                candleTime: candle.time,
-                isDispatched: false,
-                payload: { result: results[0], period },
-            };
+        yield new Promise<InstrumentEvent>((resolve) => {
+
+            tulind.indicators.ema.indicator([closes], [period], (err, results) => {
+                resolve({
+                    event: `${candle.granularity}-ema-changed`,
+                    time: new Date().toISOString(),
+                    candleTime: candle.time,
+                    isDispatched: false,
+                    payload: { result: this.toFix(results[0][results[0].length - 1]), period },
+                });
+            });
         });
     }
 
@@ -261,16 +301,22 @@ export class InstrumentEventProducerService {
             this.heikinAshiModel,
             candle.time, candle.granularity, period);
 
-        const closes = xCandles.map((x) => x.close).concat(candle.close);
+        const closes = xCandles.map((x) => x.close);
+        if (closes.length < period) {
+            return;
+        }
         // tslint:disable-next-line:space-before-function-paren
-        yield* tulind.indicators.sma.indicator([closes], [period], async function* (err, results) {
-            yield {
-                event: `${candle.granularity}-heikin-ashi-sma-changed`,
-                time: new Date().toISOString(),
-                candleTime: candle.time,
-                isDispatched: false,
-                payload: { result: results[0], period },
-            };
+        yield new Promise<InstrumentEvent>((resolve) => {
+
+            tulind.indicators.sma.indicator([closes], [period], (err, results) => {
+                resolve({
+                    event: `${candle.granularity}-heikin-ashi-sma-changed`,
+                    time: new Date().toISOString(),
+                    candleTime: candle.time,
+                    isDispatched: false,
+                    payload: { result: this.toFix(results[0][results[0].length - 1]), period },
+                });
+            });
         });
     }
     private async * raiseEmaHeikinAshi(candle: api.models.CandleDocument, period) {
@@ -279,16 +325,19 @@ export class InstrumentEventProducerService {
             this.heikinAshiModel,
             candle.time, candle.granularity, period);
 
-        const closes = xCandles.map((x) => x.close).concat(candle.close);
+        const closes = xCandles.map((x) => x.close);
         // tslint:disable-next-line:space-before-function-paren
-        yield* tulind.indicators.ema.indicator([closes], [period], async function* (err, results) {
-            yield {
-                event: `${candle.granularity}-heikin-ashi-ema-changed`,
-                time: new Date().toISOString(),
-                candleTime: candle.time,
-                isDispatched: false,
-                payload: { result: results[0], period },
-            };
+
+        yield new Promise<InstrumentEvent>((resolve) => {
+            tulind.indicators.ema.indicator([closes], [period], (err, results) => {
+                resolve({
+                    event: `${candle.granularity}-heikin-ashi-ema-changed`,
+                    time: new Date().toISOString(),
+                    candleTime: candle.time,
+                    isDispatched: false,
+                    payload: { result: this.toFix(results[0][results[0].length - 1]), period },
+                });
+            });
         });
     }
     private async * raiseSmaLineBreak(candle: api.models.CandleDocument, period) {
@@ -297,16 +346,21 @@ export class InstrumentEventProducerService {
             this.lineBreakModel,
             candle.time, candle.granularity, period);
 
-        const closes = xCandles.map((x) => x.close).concat(candle.close);
+        const closes = xCandles.map((x) => x.close);
+        if (closes.length < period) {
+            return;
+        }
         // tslint:disable-next-line:space-before-function-paren
-        yield* tulind.indicators.sma.indicator([closes], [period], async function* (err, results) {
-            yield {
-                event: `${candle.granularity}-line-break-sma-changed`,
-                time: new Date().toISOString(),
-                candleTime: candle.time,
-                isDispatched: false,
-                payload: { result: results[0], period },
-            };
+        yield new Promise<InstrumentEvent>((resolve) => {
+            tulind.indicators.sma.indicator([closes], [period], (err, results) => {
+                resolve({
+                    event: `${candle.granularity}-line-break-sma-changed`,
+                    time: new Date().toISOString(),
+                    candleTime: candle.time,
+                    isDispatched: false,
+                    payload: { result: this.toFix(results[0][results[0].length - 1]), period },
+                });
+            });
         });
     }
     private async * raiseEmaLineBreak(candle: api.models.CandleDocument, period) {
@@ -315,16 +369,19 @@ export class InstrumentEventProducerService {
             this.lineBreakModel,
             candle.time, candle.granularity, period);
 
-        const closes = xCandles.map((x) => x.close).concat(candle.close);
+        const closes = xCandles.map((x) => x.close);
         // tslint:disable-next-line:space-before-function-paren
-        yield* tulind.indicators.sma.indicator([closes], [period], async function* (err, results) {
-            yield {
-                event: `${candle.granularity}-line-break-sma-changed`,
-                time: new Date().toISOString(),
-                candleTime: candle.time,
-                isDispatched: false,
-                payload: { result: results[0], period },
-            };
+        yield new Promise<InstrumentEvent>((resolve) => {
+
+            tulind.indicators.ema.indicator([closes], [period], (err, results) => {
+                resolve({
+                    event: `${candle.granularity}-line-break-ema-changed`,
+                    time: new Date().toISOString(),
+                    candleTime: candle.time,
+                    isDispatched: false,
+                    payload: { result: this.toFix(results[0][results[0].length - 1]), period },
+                });
+            });
         });
     }
 }

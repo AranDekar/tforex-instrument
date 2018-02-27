@@ -30,7 +30,7 @@ schema.statics.findPrevious = (model, time, granularityVal) => __awaiter(this, v
 });
 schema.statics.findLimit = (model, time, granularityVal, limit) => __awaiter(this, void 0, void 0, function* () {
     return model
-        .find({ granularity: granularityVal, time: { $lt: time } })
+        .find({ granularity: granularityVal, time: { $lte: time } })
         .sort({ time: -1 })
         .limit(limit)
         .exec();

@@ -38,6 +38,9 @@ const api = require("api");
 console.log('TULIND version: ' + tulind.version);
 Symbol.asyncIterator = Symbol.asyncIterator || Symbol.for('Symbol.asyncIterator');
 class InstrumentEventProducerService {
+    constructor() {
+        this.toFix = (num) => Number(num.toFixed(5));
+    }
     /*
     / candles are the source for this class, so when this class is used,
     / it works based on the existing candles in the DB, and then it provides events
@@ -51,7 +54,13 @@ class InstrumentEventProducerService {
             this.lineBreakModel = candleService.getLineBreakModel(instrument);
             const instrumentEventModel = this.getInstrumentEventModel(instrument);
             const lastEvent = yield instrumentEventModel.findLastEvent(instrumentEventModel);
-            const lastCandles = yield this.candleModel.find({ time: { $gt: lastEvent.time } });
+            let lastCandles;
+            if (lastEvent) {
+                lastCandles = yield this.candleModel.find({ time: { $gt: lastEvent.time } }).sort({ time: 1 });
+            }
+            else {
+                lastCandles = yield this.candleModel.find().sort({ time: 1 });
+            }
             const arrayOfEvents = [];
             for (const currCandle of lastCandles) {
                 try {
@@ -138,8 +147,8 @@ class InstrumentEventProducerService {
     raiseHeikinAshi(candle) {
         return __asyncGenerator(this, arguments, function* raiseHeikinAshi_1() {
             const xPrevious = yield __await(this.heikinAshiModel.findPrevious(this.heikinAshiModel, candle.time, candle.granularity));
-            const xClose = (candle.open + candle.close + candle.high + candle.low) / 4;
-            const xOpen = (xPrevious.open + xPrevious.close) / 2;
+            const xClose = this.toFix((candle.open + candle.closeMid + candle.high + candle.low) / 4);
+            const xOpen = xPrevious ? this.toFix((xPrevious.open + xPrevious.close) / 2) : xClose;
             const xHigh = Math.max(candle.high, xOpen, xClose);
             const xLow = Math.min(candle.low, xOpen, xClose);
             const newLocal = {
@@ -169,45 +178,60 @@ class InstrumentEventProducerService {
     }
     raiseLineBreak(candle) {
         return __asyncGenerator(this, arguments, function* raiseLineBreak_1() {
-            const xLines = yield __await(this.lineBreakModel.findLimit(this.lineBreakModel, candle.time, candle.granularity, 3));
-            const closes = xLines.map((x) => x.close);
-            const opens = xLines.map((x) => x.open);
-            const bottom = Math.min(...opens, ...closes);
-            const top = Math.max(...opens, ...closes);
             let newLocal;
-            if (candle.close > top) {
+            const xLines = yield __await(this.lineBreakModel.findLimit(this.lineBreakModel, candle.time, candle.granularity, 3));
+            if (xLines.length === 0) {
                 // new line in white
-                const xOpen = xLines[0].color === 'white' ? xLines[0].close : xLines[0].open;
-                const xNumber = xLines[0].color === 'white' ? xLines[0].number + 1 : 1;
                 newLocal = {
-                    open: xOpen,
-                    number: xNumber,
-                    close: candle.close,
+                    open: candle.open,
+                    number: 1,
+                    close: candle.closeMid,
                     complete: candle.complete,
                     time: candle.time,
                     volume: candle.volume,
                     granularity: candle.granularity,
-                    color: 'white',
-                };
-            }
-            else if (candle.close < bottom) {
-                // new line in red
-                const xOpen = xLines[0].color === 'red' ? xLines[0].close : xLines[0].open;
-                const xNumber = xLines[0].color === 'red' ? xLines[0].number + 1 : 1;
-                newLocal = {
-                    open: xOpen,
-                    number: xNumber,
-                    close: candle.close,
-                    complete: candle.complete,
-                    time: candle.time,
-                    volume: candle.volume,
-                    granularity: candle.granularity,
-                    color: 'red',
+                    color: candle.closeMid > candle.open ? 'white' : 'red',
                 };
             }
             else {
-                // do nothing
-                return;
+                const closes = xLines.map((x) => x.close);
+                const opens = xLines.map((x) => x.open);
+                const bottom = Math.min(...opens, ...closes);
+                const top = Math.max(...opens, ...closes);
+                if (candle.closeMid > top) {
+                    // new line in white
+                    const xOpen = xLines[0].color === 'white' ? xLines[0].close : xLines[0].open;
+                    const xNumber = xLines[0].color === 'white' ? xLines[0].number + 1 : 1;
+                    newLocal = {
+                        open: xOpen,
+                        number: xNumber,
+                        close: candle.closeMid,
+                        complete: candle.complete,
+                        time: candle.time,
+                        volume: candle.volume,
+                        granularity: candle.granularity,
+                        color: 'white',
+                    };
+                }
+                else if (candle.closeMid < bottom) {
+                    // new line in red
+                    const xOpen = xLines[0].color === 'red' ? xLines[0].close : xLines[0].open;
+                    const xNumber = xLines[0].color === 'red' ? xLines[0].number + 1 : 1;
+                    newLocal = {
+                        open: xOpen,
+                        number: xNumber,
+                        close: candle.closeMid,
+                        complete: candle.complete,
+                        time: candle.time,
+                        volume: candle.volume,
+                        granularity: candle.granularity,
+                        color: 'red',
+                    };
+                }
+                else {
+                    // do nothing
+                    return;
+                }
             }
             const model = new this.lineBreakModel(newLocal);
             yield __await(model.save());
@@ -227,127 +251,143 @@ class InstrumentEventProducerService {
     raiseMacd(candle) {
         return __asyncGenerator(this, arguments, function* raiseMacd_1() {
             const xCandles = yield __await(this.candleModel.findLimit(this.candleModel, candle.time, candle.granularity, 40));
-            const closes = xCandles.map((x) => x.close).concat(candle.close);
+            const closes = xCandles.map((x) => x.closeMid);
+            if (closes.length < 26) {
+                return;
+            }
             // tslint:disable-next-line:space-before-function-paren
-            yield __await(yield* __asyncDelegator(__asyncValues(tulind.indicators.macd.indicator([closes], [12], [26], [9], function (err, results) {
-                return __asyncGenerator(this, arguments, function* () {
-                    yield {
+            yield new Promise((resolve) => {
+                tulind.indicators.macd.indicator([closes], [12, 26, 9], (err, results) => {
+                    resolve({
                         event: `${candle.granularity}-macd-changed`,
                         time: new Date().toISOString(),
                         candleTime: candle.time,
                         isDispatched: false,
-                        payload: { result: results[0] },
-                    };
+                        payload: {
+                            macd: results[0][results[0].length - 1],
+                            macd_signal: results[1][results[1].length - 1],
+                            macd_histogram: results[2][results[2].length - 1],
+                        },
+                    });
                 });
-            }))));
+            });
         });
     }
     raiseSma(candle, period) {
         return __asyncGenerator(this, arguments, function* raiseSma_1() {
             const xCandles = yield __await(this.candleModel.findLimit(this.candleModel, candle.time, candle.granularity, period));
-            const closes = xCandles.map((x) => x.close).concat(candle.close);
+            const closes = xCandles.map((x) => x.closeMid);
+            if (closes.length < period) {
+                return;
+            }
             // tslint:disable-next-line:space-before-function-paren
-            yield __await(yield* __asyncDelegator(__asyncValues(tulind.indicators.sma.indicator([closes], [period], function (err, results) {
-                return __asyncGenerator(this, arguments, function* () {
-                    yield {
+            yield new Promise((resolve) => {
+                tulind.indicators.sma.indicator([closes], [period], (err, results) => {
+                    resolve({
                         event: `${candle.granularity}-sma-changed`,
                         time: new Date().toISOString(),
                         candleTime: candle.time,
                         isDispatched: false,
-                        payload: { result: results[0], period },
-                    };
+                        payload: { result: this.toFix(results[0][results[0].length - 1]), period },
+                    });
                 });
-            }))));
+            });
         });
     }
     raiseEma(candle, period) {
         return __asyncGenerator(this, arguments, function* raiseEma_1() {
             const xCandles = yield __await(this.candleModel.findLimit(this.candleModel, candle.time, candle.granularity, period));
-            const closes = xCandles.map((x) => x.close).concat(candle.close);
+            const closes = xCandles.map((x) => x.closeMid);
             // tslint:disable-next-line:space-before-function-paren
-            yield __await(yield* __asyncDelegator(__asyncValues(tulind.indicators.ema.indicator([closes], [period], function (err, results) {
-                return __asyncGenerator(this, arguments, function* () {
-                    yield {
+            yield new Promise((resolve) => {
+                tulind.indicators.ema.indicator([closes], [period], (err, results) => {
+                    resolve({
                         event: `${candle.granularity}-ema-changed`,
                         time: new Date().toISOString(),
                         candleTime: candle.time,
                         isDispatched: false,
-                        payload: { result: results[0], period },
-                    };
+                        payload: { result: this.toFix(results[0][results[0].length - 1]), period },
+                    });
                 });
-            }))));
+            });
         });
     }
     raiseSmaHeikinAshi(candle, period) {
         return __asyncGenerator(this, arguments, function* raiseSmaHeikinAshi_1() {
             const xCandles = yield __await(this.heikinAshiModel.findLimit(this.heikinAshiModel, candle.time, candle.granularity, period));
-            const closes = xCandles.map((x) => x.close).concat(candle.close);
+            const closes = xCandles.map((x) => x.close);
+            if (closes.length < period) {
+                return;
+            }
             // tslint:disable-next-line:space-before-function-paren
-            yield __await(yield* __asyncDelegator(__asyncValues(tulind.indicators.sma.indicator([closes], [period], function (err, results) {
-                return __asyncGenerator(this, arguments, function* () {
-                    yield {
+            yield new Promise((resolve) => {
+                tulind.indicators.sma.indicator([closes], [period], (err, results) => {
+                    resolve({
                         event: `${candle.granularity}-heikin-ashi-sma-changed`,
                         time: new Date().toISOString(),
                         candleTime: candle.time,
                         isDispatched: false,
-                        payload: { result: results[0], period },
-                    };
+                        payload: { result: this.toFix(results[0][results[0].length - 1]), period },
+                    });
                 });
-            }))));
+            });
         });
     }
     raiseEmaHeikinAshi(candle, period) {
         return __asyncGenerator(this, arguments, function* raiseEmaHeikinAshi_1() {
             const xCandles = yield __await(this.heikinAshiModel.findLimit(this.heikinAshiModel, candle.time, candle.granularity, period));
-            const closes = xCandles.map((x) => x.close).concat(candle.close);
+            const closes = xCandles.map((x) => x.close);
             // tslint:disable-next-line:space-before-function-paren
-            yield __await(yield* __asyncDelegator(__asyncValues(tulind.indicators.ema.indicator([closes], [period], function (err, results) {
-                return __asyncGenerator(this, arguments, function* () {
-                    yield {
+            yield new Promise((resolve) => {
+                tulind.indicators.ema.indicator([closes], [period], (err, results) => {
+                    resolve({
                         event: `${candle.granularity}-heikin-ashi-ema-changed`,
                         time: new Date().toISOString(),
                         candleTime: candle.time,
                         isDispatched: false,
-                        payload: { result: results[0], period },
-                    };
+                        payload: { result: this.toFix(results[0][results[0].length - 1]), period },
+                    });
                 });
-            }))));
+            });
         });
     }
     raiseSmaLineBreak(candle, period) {
         return __asyncGenerator(this, arguments, function* raiseSmaLineBreak_1() {
             const xCandles = yield __await(this.lineBreakModel.findLimit(this.lineBreakModel, candle.time, candle.granularity, period));
-            const closes = xCandles.map((x) => x.close).concat(candle.close);
+            const closes = xCandles.map((x) => x.close);
+            if (closes.length < period) {
+                return;
+            }
             // tslint:disable-next-line:space-before-function-paren
-            yield __await(yield* __asyncDelegator(__asyncValues(tulind.indicators.sma.indicator([closes], [period], function (err, results) {
-                return __asyncGenerator(this, arguments, function* () {
-                    yield {
+            yield new Promise((resolve) => {
+                tulind.indicators.sma.indicator([closes], [period], (err, results) => {
+                    resolve({
                         event: `${candle.granularity}-line-break-sma-changed`,
                         time: new Date().toISOString(),
                         candleTime: candle.time,
                         isDispatched: false,
-                        payload: { result: results[0], period },
-                    };
+                        payload: { result: this.toFix(results[0][results[0].length - 1]), period },
+                    });
                 });
-            }))));
+            });
         });
     }
     raiseEmaLineBreak(candle, period) {
         return __asyncGenerator(this, arguments, function* raiseEmaLineBreak_1() {
             const xCandles = yield __await(this.lineBreakModel.findLimit(this.lineBreakModel, candle.time, candle.granularity, period));
-            const closes = xCandles.map((x) => x.close).concat(candle.close);
+            const closes = xCandles.map((x) => x.close);
             // tslint:disable-next-line:space-before-function-paren
-            yield __await(yield* __asyncDelegator(__asyncValues(tulind.indicators.sma.indicator([closes], [period], function (err, results) {
-                return __asyncGenerator(this, arguments, function* () {
-                    yield {
-                        event: `${candle.granularity}-line-break-sma-changed`,
+            yield new Promise((resolve) => {
+                tulind.indicators.ema.indicator([closes], [period], (err, results) => {
+                    resolve({
+                        event: `${candle.granularity}-line-break-ema-changed`,
                         time: new Date().toISOString(),
                         candleTime: candle.time,
                         isDispatched: false,
-                        payload: { result: results[0], period },
-                    };
+                        payload: { result: this.toFix(results[0][results[0].length - 1]), period },
+                    });
                 });
-            }))));
+            });
         });
     }
 }

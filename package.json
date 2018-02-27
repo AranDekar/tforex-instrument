@@ -1,5 +1,5 @@
 {
-  "name": "tforex-instrument",
+  "name": "tss-instrument",
   "version": "0.0.1",
   "private": true,
   "description": "Instruments used across the system in all granularities",
