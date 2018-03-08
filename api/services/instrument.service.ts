@@ -13,6 +13,20 @@ export class InstrumentService {
         }
     }
 
+    public async getEvents(title: api.enums.InstrumentEnum, candleTime: Date | undefined, events: string | undefined):
+        Promise<api.models.InstrumentEventDocument[]> {
+        let eventsArr: string[] = [];
+        if (!candleTime) {
+            candleTime = new Date('1900-01-01');
+        }
+        if (events) {
+            eventsArr = events.split(',');
+        }
+
+        const model = this.getInstrumentEventModel(title);
+        return await model.findEventsByTimeEvents(model, candleTime, eventsArr);
+    }
+
     public async sync() {
         const service = new api.proxies.OandaProxy();
         const instruments = await service.getInstruments();
@@ -41,5 +55,18 @@ export class InstrumentService {
                 await model.save();
             }
         }
+    }
+
+    private getInstrumentEventModel(instrument: api.enums.InstrumentEnum):
+        api.models.InstrumentEventModel {
+        switch (instrument) {
+            case api.enums.InstrumentEnum.AUD_USD:
+                return api.models.audUsdEvents;
+            case api.enums.InstrumentEnum.GBP_USD:
+                return api.models.gbpUsdEvents;
+            case api.enums.InstrumentEnum.EUR_USD:
+                return api.models.eurUsdEvents;
+        }
+        throw new Error(`instrumentEvent model is undefined for ${instrument}`);
     }
 }

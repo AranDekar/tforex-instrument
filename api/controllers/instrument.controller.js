@@ -27,4 +27,18 @@ function getInstruments(req, res, next) {
     });
 }
 exports.getInstruments = getInstruments;
+function getEvents(req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const service = new api.services.InstrumentService();
+            const data = yield service.getEvents(req.swagger.params.instrument, req.swagger.params.candleTime, req.swagger.params.events);
+            res.json(data);
+        }
+        catch (err) {
+            res.statusCode = 500; // bad server
+            next(err);
+        }
+    });
+}
+exports.getEvents = getEvents;
 //# sourceMappingURL=instrument.controller.js.map

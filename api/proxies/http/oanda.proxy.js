@@ -40,7 +40,7 @@ class OandaProxy {
             }
             else {
                 return new Promise((resolve, reject) => {
-                    this.client.getCandles(api.enums.InstrumentEnum[instrument], start, end, api.enums.GranularityEnum[granularity], (err, candles) => {
+                    this.client.getCandles(api.enums.InstrumentEnum[instrument], start.toISOString(), end.toISOString(), api.enums.GranularityEnum[granularity], (err, candles) => {
                         if (err) {
                             return reject(err);
                         }
@@ -52,7 +52,7 @@ class OandaProxy {
                             element.closeAsk = Number(element.closeAsk.toFixed(5));
                             element.closeBid = Number(element.closeBid.toFixed(5));
                             element.granularity = granularity;
-                            element.time = element.time / 1000;
+                            element.time = new Date(element.time / 1000);
                         });
                         return resolve(candles);
                     });

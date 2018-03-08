@@ -13,12 +13,16 @@ class InstrumentEventProducerProxy {
         });
         const producer = new kafka.Producer(client);
         producer.on('ready', () => {
-            const payload = { topic: this.topic, messages: JSON.stringify(events) };
-            producer.send([payload], (err, data) => {
-                if (err) {
-                    console.log(err);
-                }
-            });
+            for (const event of events) {
+                const payload = { topic: this.topic, messages: JSON.stringify(event) };
+                producer.send([payload], (err, data) => {
+                    if (err) {
+                        console.log(err);
+                    }
+                    event.isDispatched = true;
+                    event.save();
+                });
+            }
         });
         producer.on('error', (err) => {
             console.log(err);

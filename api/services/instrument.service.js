@@ -21,6 +21,19 @@ class InstrumentService {
             }
         });
     }
+    getEvents(title, candleTime, events) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let eventsArr = [];
+            if (!candleTime) {
+                candleTime = new Date('1900-01-01');
+            }
+            if (events) {
+                eventsArr = events.split(',');
+            }
+            const model = this.getInstrumentEventModel(title);
+            return yield model.findEventsByTimeEvents(model, candleTime, eventsArr);
+        });
+    }
     sync() {
         return __awaiter(this, void 0, void 0, function* () {
             const service = new api.proxies.OandaProxy();
@@ -50,6 +63,17 @@ class InstrumentService {
                 }
             }
         });
+    }
+    getInstrumentEventModel(instrument) {
+        switch (instrument) {
+            case api.enums.InstrumentEnum.AUD_USD:
+                return api.models.audUsdEvents;
+            case api.enums.InstrumentEnum.GBP_USD:
+                return api.models.gbpUsdEvents;
+            case api.enums.InstrumentEnum.EUR_USD:
+                return api.models.eurUsdEvents;
+        }
+        throw new Error(`instrumentEvent model is undefined for ${instrument}`);
     }
 }
 exports.InstrumentService = InstrumentService;

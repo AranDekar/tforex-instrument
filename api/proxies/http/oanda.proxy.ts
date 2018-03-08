@@ -15,7 +15,7 @@ export class OandaProxy {
 
     public async getCandles(
         instrument: api.enums.InstrumentEnum,
-        start: string, end: string, granularity: api.enums.GranularityEnum): Promise<any[]> {
+        start: Date, end: Date, granularity: api.enums.GranularityEnum): Promise<any[]> {
         if (api.shared.Config.settings.mockup_oanda) {
             return Promise.resolve(
                 [{
@@ -33,7 +33,7 @@ export class OandaProxy {
                 }]);
         } else {
             return new Promise<any[]>((resolve, reject) => {
-                this.client.getCandles(api.enums.InstrumentEnum[instrument], start, end,
+                this.client.getCandles(api.enums.InstrumentEnum[instrument], start.toISOString(), end.toISOString(),
                     api.enums.GranularityEnum[granularity],
                     (err, candles) => {
                         if (err) {
@@ -47,7 +47,7 @@ export class OandaProxy {
                             element.closeAsk = Number(element.closeAsk.toFixed(5));
                             element.closeBid = Number(element.closeBid.toFixed(5));
                             element.granularity = granularity;
-                            element.time = element.time / 1000;
+                            element.time = new Date(element.time / 1000);
                         });
                         return resolve(candles);
                     });

@@ -36,7 +36,7 @@ tags:
 
     
 paths:
-  /:
+  /instruments:
     x-swagger-router-controller: instrument.controller
     get:
       tags: 
@@ -66,16 +66,16 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
-  /{instrument}/candles/{granularity}/publish/{topic}:
+  /instruments/{instrument}/events:
     # binds a127 app logic to a route
-    x-swagger-router-controller: candle.controller
+    x-swagger-router-controller: instrument.controller
     get:
       tags: 
-        - candle
+        - instrument
       security:
         - api_key: []
-      description: gets the LAST candle of an instrument by granularity
-      operationId: getCandles
+      description: gets limited number of events of an instrument
+      operationId: getEvents
       parameters:
         - name: instrument
           description: the instrument of the candles
@@ -84,26 +84,22 @@ paths:
           type: string
           enum:
             - AUD_USD
-        - name: granularity
-          description: the granularity in which the candles are fetched
+        - name: candleTime
+          description: if provided, the limited number of events are returned where their candle time is greater than this
           type: string
-          in: path
-          enum:
-            - M5
-          required: true
-        - name: topic
-          description: the candles will be published into this topic
+          format: date-time
+          in: query
+        - name: events
+          description: a comma separated list of events that are required to return
           type: string
-          in: path
-          required: true
+          in: query
       responses:
         "200":
           description: Success
-          schema:
-            type: object
-            properties:
-              count:
-                type: integer
+          schema: 
+            type: array
+            items:
+              $ref: "#/definitions/InstrumentEvent"
             example:   # Sample object
               count: 100
         default:
@@ -155,7 +151,25 @@ definitions:
       granularities:
         type: array
         items:
-          type: string
+          type: string  
+  InstrumentEvent:
+    type: object
+    required:
+      - event
+      - eventTime
+      - candleTime
+      - payload
+    properties:
+      event:
+        type: string
+      eventTime:
+        type: string
+        format: date-time
+      candleTime:
+        type: string
+        format: date-time
+      payload:
+        type: object
   Candle:
     type: object
     properties:

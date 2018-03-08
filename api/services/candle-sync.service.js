@@ -28,16 +28,19 @@ class CandleSyncService {
                 throw new Error('candle model is undefined in CandleService!');
             }
             for (const currGranularity of granularities) {
-                this.startTime = '';
-                this.endTime = '';
+                this.startTime = null;
+                this.endTime = null;
                 const lastCandle = yield candleModel.findLastCandle(candleModel, currGranularity);
                 if (lastCandle) {
-                    this.endTime = new Date(Number(lastCandle.time)).toISOString();
+                    this.endTime = lastCandle.time;
                 }
                 let stillInLoop = false;
                 do {
                     this.setStartTime(currGranularity);
                     stillInLoop = this.setEndTime(currGranularity);
+                    if (!this.startTime || !this.endTime) {
+                        throw new Error('start or end time is null');
+                    }
                     if (this.startTime >= this.endTime) {
                         break;
                     }
@@ -63,7 +66,7 @@ class CandleSyncService {
     setStartTime(granularity) {
         let startTime = new Date();
         if (this.endTime) {
-            startTime = new Date(this.endTime);
+            startTime = this.endTime;
         }
         else {
             switch (granularity) {
@@ -111,10 +114,13 @@ class CandleSyncService {
                     break;
             }
         }
-        this.startTime = startTime.toISOString();
+        this.startTime = startTime;
     }
     setEndTime(granularity) {
-        let endTime = new Date(this.startTime);
+        let endTime = this.startTime;
+        if (!endTime) {
+            throw new Error('end time is null');
+        }
         switch (granularity) {
             case api.enums.GranularityEnum.M5:
                 // 15 days for M5, 288 candles per day
@@ -142,10 +148,10 @@ class CandleSyncService {
                 break;
         }
         if (endTime > new Date()) {
-            this.endTime = new Date().toISOString();
+            this.endTime = new Date();
             return false;
         }
-        this.endTime = endTime.toISOString();
+        this.endTime = endTime;
         return true;
     }
 }

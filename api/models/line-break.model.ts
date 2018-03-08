@@ -8,7 +8,7 @@ export interface LineBreak {
     open: number;
     close: number;
     complete: boolean;
-    time: string;
+    time: Date;
     volume: number;
     granularity: string;
     color: string;
@@ -22,7 +22,7 @@ const schema = new Schema({
     close: { type: Number },
     complete: { type: Boolean },
     volume: { type: Number },
-    time: { type: String },
+    time: { type: Date },
     granularity: { type: String },
     color: { type: String, enum: ['white', 'red'] },
     number: { type: Number },
@@ -32,15 +32,15 @@ schema.index({ time: 1 }); // schema level ascending index on time
 
 export interface LineBreakModel extends Model<LineBreakDocument> {
     findLimit(
-        model: Model<LineBreakDocument>, time: string,
+        model: Model<LineBreakDocument>, time: Date,
         granularity: string, limit: number): Promise<LineBreakDocument[]>;
     findPrevious(
-        model: Model<LineBreakDocument>, time: string,
+        model: Model<LineBreakDocument>, time: Date,
         granularity: string): Promise<LineBreakDocument>;
 }
 
 schema.statics.findPrevious = async (
-    model: Model<LineBreakDocument>, time: string,
+    model: Model<LineBreakDocument>, time: Date,
     granularityVal: string) => {
     return model
         .findOne({ granularity: granularityVal, time: { $lt: time } })
@@ -49,7 +49,7 @@ schema.statics.findPrevious = async (
 };
 
 schema.statics.findLimit = async (
-    model: Model<LineBreakDocument>, time: string,
+    model: Model<LineBreakDocument>, time: Date,
     granularityVal: string, limit: number) => {
     return model
         .find({ granularity: granularityVal, time: { $lte: time } })

@@ -18,7 +18,7 @@ const schema = new mongoose_1.Schema({
     low: { type: Number },
     open: { type: Number },
     volume: { type: Number },
-    time: { type: String },
+    time: { type: Date },
     granularity: { type: String },
 });
 schema.index({ time: 1 }); // schema level ascending index on time

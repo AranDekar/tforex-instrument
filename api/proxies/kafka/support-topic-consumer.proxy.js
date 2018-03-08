@@ -62,10 +62,11 @@ class SupportTopicConsumerProxy {
                             break;
                         case produceEvents:
                             lock.acquire(key, () => __awaiter(this, void 0, void 0, function* () {
-                                const instrumentEventProducerService = new api.services.InstrumentEventProducerService();
+                                const instrumentEventProducerService = new api.services.InstrumentEventProducerService(true);
                                 const service = new api.services.CandleSyncService();
-                                yield instrumentEventProducerService.produceNewEvents(item.instrument);
-                                yield instrumentEventProducerService.publishNewEvents(item.instrument);
+                                const events = yield instrumentEventProducerService.produceNewEvents(item.instrument);
+                                events.forEach((e) => e.isDispatched = true);
+                                yield instrumentEventProducerService.saveNewEvents(item.instrument, events);
                                 return;
                             }), opts).then(() => {
                                 console.log('lock released');

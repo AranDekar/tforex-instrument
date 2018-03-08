@@ -11,64 +11,79 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
 const api = require("api");
 const mongoose = api.shared.DataAccess.mongooseInstance;
+const mongooseBackup = api.shared.DataAccess.mongooseBackupInstance;
 const schema = new mongoose_1.Schema({
     event: {
         type: String, enum: [
-            'm5-closed', 'm15-closed', 'm30-closed', 'h1-closed', 'h4-closed', 'd1-closed',
-            'm5-line-break-closed', 'm15-line-break-closed', 'm30-line-break-closed', 'h1-line-break-closed',
-            'h4-line-break-closed', 'd1-line-break-closed',
-            'm5-heikin-ashi-closed', 'm15-heikin-ashi-closed', 'm30-heikin-ashi-closed', 'h1-heikin-ashi-closed',
-            'h4-heikin-ashi-closed', 'd1-heikin-ashi-closed',
-            'm5-dmi-changed', 'm15-dmi-changed', 'm30-dmi-changed', 'h1-dmi-changed', 'h4-dmi-changed',
-            'd1-dmi-changed',
-            'm5-heikin-ashi-dmi-changed', 'm15-heikin-ashi-dmi-changed', 'm30-heikin-ashi-dmi-changed',
-            'h1-heikin-ashi-dmi-changed', 'h4-heikin-ashi-dmi-changed', 'd1-heikin-ashi-dmi-changed',
-            'm5-line-break-dmi-changed', 'm15-line-break-dmi-changed', 'm30-line-break-dmi-changed',
-            'h1-line-break-dmi-changed', 'h4-line-break-dmi-changed', 'd1-line-break-dmi-changed',
-            'm5-rsi-changed', 'm15-rsi-changed', 'm30-rsi-changed', 'h1-rsi-changed', 'h4-rsi-changed',
-            'd1-rsi-changed',
-            'm5-heikin-ashi-rsi-changed', 'm15-heikin-ashi-rsi-changed', 'm30-heikin-ashi-rsi-changed',
-            'h1-heikin-ashi-rsi-changed', 'h4-heikin-ashi-rsi-changed', 'd1-heikin-ashi-rsi-changed',
-            'm5-line-break-rsi-changed', 'm15-line-break-rsi-changed', 'm30-line-break-rsi-changed',
-            'h1-line-break-rsi-changed', 'h4-line-break-rsi-changed', 'd1-line-break-rsi-changed',
-            'm5-macd-changed', 'm15-macd-changed', 'm30-macd-changed', 'h1-macd-changed', 'h4-macd-changed',
-            'd1-macd-changed',
-            'm5-heikin-ashi-macd-changed', 'm15-heikin-ashi-macd-changed', 'm30-heikin-ashi-macd-changed',
-            'h1-heikin-ashi-macd-changed', 'h4-heikin-ashi-macd-changed', 'd1-heikin-ashi-macd-changed',
-            'm5-line-break-macd-changed', 'm15-line-break-macd-changed', 'm30-line-break-macd-changed',
-            'h1-line-break-macd-changed', 'h4-line-break-macd-changed', 'd1-line-break-macd-changed',
-            'm5-sma-changed', 'm15-sma-changed', 'm30-sma-changed', 'h1-sma-changed', 'h4-sma-changed',
-            'd1-sma-changed',
-            'm5-heikin-ashi-sma-changed', 'm15-heikin-ashi-sma-changed', 'm30-heikin-ashi-sma-changed',
-            'h1-heikin-ashi-sma-changed', 'h4-heikin-ashi-sma-changed', 'd1-heikin-ashi-sma-changed',
-            'm5-line-break-sma-changed', 'm15-line-break-sma-changed', 'm30-line-break-sma-changed',
-            'h1-line-break-sma-changed', 'h4-line-break-sma-changed', 'd1-line-break-sma-changed',
-            'm5-ema-changed', 'm15-ema-changed', 'm30-ema-changed', 'h1-ema-changed', 'h4-ema-changed',
-            'd1-ema-changed',
-            'm5-heikin-ashi-ema-changed', 'm15-heikin-ashi-ema-changed', 'm30-heikin-ashi-ema-changed',
-            'h1-heikin-ashi-ema-changed', 'h4-heikin-ashi-ema-changed', 'd1-heikin-ashi-ema-changed',
-            'm5-line-break-ema-changed', 'm15-line-break-ema-changed', 'm30-line-break-ema-changed',
-            'h1-line-break-ema-changed', 'h4-line-break-ema-changed', 'd1-line-break-ema-changed',
+            'm5_closed', 'm15_closed', 'm30_closed', 'h1_closed', 'h4_closed', 'd_closed',
+            'm5_line_break_closed', 'm15_line_break_closed', 'm30_line_break_closed', 'h1_line_break_closed',
+            'h4_line_break_closed', 'd_line_break_closed',
+            'm5_heikin_ashi_closed', 'm15_heikin_ashi_closed', 'm30_heikin_ashi_closed', 'h1_heikin_ashi_closed',
+            'h4_heikin_ashi_closed', 'd_heikin_ashi_closed',
+            'm5_dmi_changed', 'm15_dmi_changed', 'm30_dmi_changed', 'h1_dmi_changed', 'h4_dmi_changed',
+            'd_dmi_changed',
+            'm5_heikin_ashi_dmi_changed', 'm15_heikin_ashi_dmi_changed', 'm30_heikin_ashi_dmi_changed',
+            'h1_heikin_ashi_dmi_changed', 'h4_heikin_ashi_dmi_changed', 'd_heikin_ashi_dmi_changed',
+            'm5_line_break_dmi_changed', 'm15_line_break_dmi_changed', 'm30_line_break_dmi_changed',
+            'h1_line_break_dmi_changed', 'h4_line_break_dmi_changed', 'd_line_break_dmi_changed',
+            'm5_rsi_changed', 'm15_rsi_changed', 'm30_rsi_changed', 'h1_rsi_changed', 'h4_rsi_changed',
+            'd_rsi_changed',
+            'm5_heikin_ashi_rsi_changed', 'm15_heikin_ashi_rsi_changed', 'm30_heikin_ashi_rsi_changed',
+            'h1_heikin_ashi_rsi_changed', 'h4_heikin_ashi_rsi_changed', 'd_heikin_ashi_rsi_changed',
+            'm5_line_break_rsi_changed', 'm15_line_break_rsi_changed', 'm30_line_break_rsi_changed',
+            'h1_line_break_rsi_changed', 'h4_line_break_rsi_changed', 'd_line_break_rsi_changed',
+            'm5_macd_changed', 'm15_macd_changed', 'm30_macd_changed', 'h1_macd_changed', 'h4_macd_changed',
+            'd_macd_changed',
+            'm5_heikin_ashi_macd_changed', 'm15_heikin_ashi_macd_changed', 'm30_heikin_ashi_macd_changed',
+            'h1_heikin_ashi_macd_changed', 'h4_heikin_ashi_macd_changed', 'd_heikin_ashi_macd_changed',
+            'm5_line_break_macd_changed', 'm15_line_break_macd_changed', 'm30_line_break_macd_changed',
+            'h1_line_break_macd_changed', 'h4_line_break_macd_changed', 'd_line_break_macd_changed',
+            'm5_sma_changed', 'm15_sma_changed', 'm30_sma_changed', 'h1_sma_changed', 'h4_sma_changed',
+            'd_sma_changed',
+            'm5_heikin_ashi_sma_changed', 'm15_heikin_ashi_sma_changed', 'm30_heikin_ashi_sma_changed',
+            'h1_heikin_ashi_sma_changed', 'h4_heikin_ashi_sma_changed', 'd_heikin_ashi_sma_changed',
+            'm5_line_break_sma_changed', 'm15_line_break_sma_changed', 'm30_line_break_sma_changed',
+            'h1_line_break_sma_changed', 'h4_line_break_sma_changed', 'd_line_break_sma_changed',
+            'm5_ema_changed', 'm15_ema_changed', 'm30_ema_changed', 'h1_ema_changed', 'h4_ema_changed',
+            'd_ema_changed',
+            'm5_heikin_ashi_ema_changed', 'm15_heikin_ashi_ema_changed', 'm30_heikin_ashi_ema_changed',
+            'h1_heikin_ashi_ema_changed', 'h4_heikin_ashi_ema_changed', 'd_heikin_ashi_ema_changed',
+            'm5_line_break_ema_changed', 'm15_line_break_ema_changed', 'm30_line_break_ema_changed',
+            'h1_line_break_ema_changed', 'h4_line_break_ema_changed', 'd_line_break_ema_changed',
         ],
     },
     isDispatched: { type: Boolean, default: false },
-    time: { type: Number },
+    eventTime: { type: Date },
+    candleTime: { type: Date },
+    candleBid: { type: Number },
+    candleAsk: { type: Number },
     payload: { type: mongoose_1.Schema.Types.Mixed },
 });
-schema.index({ time: 1 }); // schema level ascending index on time
+schema.index({ candleTime: 1 }); // schema level ascending index on candleTime
 schema.statics.findUndispatchedEvents = (model) => __awaiter(this, void 0, void 0, function* () {
     return model
         .find({ isDispatched: false })
-        .sort({ time: 1 })
+        .sort({ candleTime: 1 })
         .exec();
 });
 schema.statics.findLastEvent = (model) => __awaiter(this, void 0, void 0, function* () {
     return model
         .findOne()
-        .sort({ time: -1 })
+        .sort({ candleTime: -1 })
         .exec();
 });
-exports.gbpUsdEvents = mongoose.model('gbp-usd-events', schema);
-exports.audUsdEvents = mongoose.model('aud-usd-events', schema);
-exports.eurUsdEvents = mongoose.model('eur-usd-events', schema);
+schema.statics.findEventsByTimeEvents = (model, time, events) => __awaiter(this, void 0, void 0, function* () {
+    return model
+        .find({ candleTime: { $gt: time }, type: { $in: events } })
+        .sort({ candleTime: 1 })
+        .limit(1000)
+        .exec();
+});
+exports.gbpUsdEvents = mongoose.model('gbp_usd_events', schema);
+exports.audUsdEvents = mongoose.model('aud_usd_events', schema);
+exports.eurUsdEvents = mongoose.model('eur_usd_events', schema);
+// --------
+exports.gbpUsdBackupEvents = mongooseBackup.model('gbp_usd_events', schema);
+exports.audUsdBackupEvents = mongooseBackup.model('aud_usd_events', schema);
+exports.eurUsdBackupEvents = mongooseBackup.model('eur_usd_events', schema);
 //# sourceMappingURL=instrument-event.model.js.map

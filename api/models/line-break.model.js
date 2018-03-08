@@ -16,7 +16,7 @@ const schema = new mongoose_1.Schema({
     close: { type: Number },
     complete: { type: Boolean },
     volume: { type: Number },
-    time: { type: String },
+    time: { type: Date },
     granularity: { type: String },
     color: { type: String, enum: ['white', 'red'] },
     number: { type: Number },

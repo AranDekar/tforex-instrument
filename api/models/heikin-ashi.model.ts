@@ -10,7 +10,7 @@ export interface HeikinAshi {
     high: number;
     low: number;
     open: number;
-    time: string;
+    time: Date;
     volume: number;
     granularity: string;
 }
@@ -24,7 +24,7 @@ const schema = new Schema({
     low: { type: Number },
     open: { type: Number },
     volume: { type: Number },
-    time: { type: String },
+    time: { type: Date },
     granularity: { type: String },
 });
 
@@ -32,15 +32,15 @@ schema.index({ time: 1 }); // schema level ascending index on time
 
 export interface HeikinAshiModel extends Model<HeikinAshiDocument> {
     findPrevious(
-        model: Model<HeikinAshiDocument>, time: string,
+        model: Model<HeikinAshiDocument>, time: Date,
         granularity: string): Promise<HeikinAshiDocument>;
     findLimit(
-        model: Model<HeikinAshiDocument>, time: string,
+        model: Model<HeikinAshiDocument>, time: Date,
         granularity: string, limit: number): Promise<HeikinAshiDocument[]>;
 }
 
 schema.statics.findPrevious = async (
-    model: Model<HeikinAshiDocument>, time: string,
+    model: Model<HeikinAshiDocument>, time: Date,
     granularityVal: string) => {
     return model
         .findOne({ granularity: granularityVal, time: { $lt: time } })
@@ -49,7 +49,7 @@ schema.statics.findPrevious = async (
 };
 
 schema.statics.findLimit = async (
-    model: Model<HeikinAshiDocument>, time: string,
+    model: Model<HeikinAshiDocument>, time: Date,
     granularityVal: string, limit: number) => {
     return model
         .find({ granularity: granularityVal, time: { $lte: time } })

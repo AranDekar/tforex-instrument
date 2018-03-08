@@ -15,3 +15,16 @@ export async function getInstruments(req, res, next) {
         next(err);
     }
 }
+
+export async function getEvents(req, res, next) {
+    try {
+        const service = new api.services.InstrumentService();
+        const data = await service.getEvents(req.swagger.params.instrument,
+            req.swagger.params.candleTime,
+            req.swagger.params.events);
+        res.json(data);
+    } catch (err) {
+        res.statusCode = 500; // bad server
+        next(err);
+    }
+}

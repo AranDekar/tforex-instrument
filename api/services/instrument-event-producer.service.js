@@ -35,10 +35,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // const tulind = require('tulind/lib/binding/Release/node-v59-darwin-x64/tulind');
 const tulind = require("tulind");
 const api = require("api");
+const enums_1 = require("../enums");
 console.log('TULIND version: ' + tulind.version);
 Symbol.asyncIterator = Symbol.asyncIterator || Symbol.for('Symbol.asyncIterator');
 class InstrumentEventProducerService {
-    constructor() {
+    constructor(isBackupStateEnabled = false) {
+        this.isBackupStateEnabled = isBackupStateEnabled;
         this.toFix = (num) => Number(num.toFixed(5));
     }
     /*
@@ -52,11 +54,11 @@ class InstrumentEventProducerService {
             this.candleModel = candleService.getModel(instrument);
             this.heikinAshiModel = candleService.getHeikinAshiModel(instrument);
             this.lineBreakModel = candleService.getLineBreakModel(instrument);
-            const instrumentEventModel = this.getInstrumentEventModel(instrument);
-            const lastEvent = yield instrumentEventModel.findLastEvent(instrumentEventModel);
+            this.instrumentEventModel = this.getInstrumentEventModel(instrument);
+            const lastEvent = yield this.instrumentEventModel.findLastEvent(this.instrumentEventModel);
             let lastCandles;
             if (lastEvent) {
-                lastCandles = yield this.candleModel.find({ time: { $gt: lastEvent.time } }).sort({ time: 1 });
+                lastCandles = yield this.candleModel.find({ time: { $gt: lastEvent.candleTime } }).sort({ time: 1 });
             }
             else {
                 lastCandles = yield this.candleModel.find().sort({ time: 1 });
@@ -92,8 +94,16 @@ class InstrumentEventProducerService {
                         break;
                 }
             }
-            yield instrumentEventModel.create(arrayOfEvents);
+            return arrayOfEvents;
             var e_1, _c;
+        });
+    }
+    saveNewEvents(instrument, instruments) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this.instrumentEventModel) {
+                this.instrumentEventModel = this.getInstrumentEventModel(instrument);
+            }
+            yield this.instrumentEventModel.create(instruments);
         });
     }
     publishNewEvents(instrument) {
@@ -108,13 +118,25 @@ class InstrumentEventProducerService {
         });
     }
     getInstrumentEventModel(instrument) {
-        switch (instrument) {
-            case api.enums.InstrumentEnum.AUD_USD:
-                return api.models.audUsdEvents;
-            case api.enums.InstrumentEnum.GBP_USD:
-                return api.models.gbpUsdEvents;
-            case api.enums.InstrumentEnum.EUR_USD:
-                return api.models.eurUsdEvents;
+        if (this.isBackupStateEnabled) {
+            switch (instrument) {
+                case api.enums.InstrumentEnum.AUD_USD:
+                    return api.models.audUsdBackupEvents;
+                case api.enums.InstrumentEnum.GBP_USD:
+                    return api.models.gbpUsdBackupEvents;
+                case api.enums.InstrumentEnum.EUR_USD:
+                    return api.models.eurUsdBackupEvents;
+            }
+        }
+        else {
+            switch (instrument) {
+                case api.enums.InstrumentEnum.AUD_USD:
+                    return api.models.audUsdEvents;
+                case api.enums.InstrumentEnum.GBP_USD:
+                    return api.models.gbpUsdEvents;
+                case api.enums.InstrumentEnum.EUR_USD:
+                    return api.models.eurUsdEvents;
+            }
         }
         throw new Error(`instrumentEvent model is undefined for ${instrument}`);
     }
@@ -131,9 +153,11 @@ class InstrumentEventProducerService {
     raiseCandle(candle) {
         return __asyncGenerator(this, arguments, function* raiseCandle_1() {
             yield {
-                event: `${candle.granularity}-closed`,
-                time: new Date().toISOString(),
+                event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_closed`],
+                eventTime: new Date(),
                 candleTime: candle.time,
+                candleBid: candle.closeBid,
+                candleAsk: candle.closeAsk,
                 isDispatched: false,
                 payload: candle,
             };
@@ -164,9 +188,11 @@ class InstrumentEventProducerService {
             const model = new this.heikinAshiModel(newLocal);
             yield __await(model.save());
             yield {
-                event: `${candle.granularity}-heikin-ashi-closed`,
-                time: new Date().toISOString(),
+                event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_heikin_ashi_closed`],
+                eventTime: new Date(),
                 candleTime: candle.time,
+                candleBid: candle.closeBid,
+                candleAsk: candle.closeAsk,
                 isDispatched: false,
                 payload: newLocal,
             };
@@ -236,9 +262,11 @@ class InstrumentEventProducerService {
             const model = new this.lineBreakModel(newLocal);
             yield __await(model.save());
             yield {
-                event: `${candle.granularity}-line-break-closed`,
-                time: new Date().toISOString(),
+                event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_line_break_closed`],
+                eventTime: new Date(),
                 candleTime: candle.time,
+                candleBid: candle.closeBid,
+                candleAsk: candle.closeAsk,
                 isDispatched: false,
                 payload: newLocal,
             };
@@ -259,14 +287,16 @@ class InstrumentEventProducerService {
             yield new Promise((resolve) => {
                 tulind.indicators.macd.indicator([closes], [12, 26, 9], (err, results) => {
                     resolve({
-                        event: `${candle.granularity}-macd-changed`,
-                        time: new Date().toISOString(),
+                        event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_macd_changed`],
+                        eventTime: new Date(),
                         candleTime: candle.time,
+                        candleBid: candle.closeBid,
+                        candleAsk: candle.closeAsk,
                         isDispatched: false,
                         payload: {
-                            macd: results[0][results[0].length - 1],
-                            macd_signal: results[1][results[1].length - 1],
-                            macd_histogram: results[2][results[2].length - 1],
+                            macd: this.toFix(results[0][results[0].length - 1]),
+                            macd_signal: this.toFix(results[1][results[1].length - 1]),
+                            macd_histogram: this.toFix(results[2][results[2].length - 1]),
                         },
                     });
                 });
@@ -284,9 +314,11 @@ class InstrumentEventProducerService {
             yield new Promise((resolve) => {
                 tulind.indicators.sma.indicator([closes], [period], (err, results) => {
                     resolve({
-                        event: `${candle.granularity}-sma-changed`,
-                        time: new Date().toISOString(),
+                        event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_sma_changed`],
+                        eventTime: new Date(),
                         candleTime: candle.time,
+                        candleBid: candle.closeBid,
+                        candleAsk: candle.closeAsk,
                         isDispatched: false,
                         payload: { result: this.toFix(results[0][results[0].length - 1]), period },
                     });
@@ -302,9 +334,11 @@ class InstrumentEventProducerService {
             yield new Promise((resolve) => {
                 tulind.indicators.ema.indicator([closes], [period], (err, results) => {
                     resolve({
-                        event: `${candle.granularity}-ema-changed`,
-                        time: new Date().toISOString(),
+                        event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_ema_changed`],
+                        eventTime: new Date(),
                         candleTime: candle.time,
+                        candleBid: candle.closeBid,
+                        candleAsk: candle.closeAsk,
                         isDispatched: false,
                         payload: { result: this.toFix(results[0][results[0].length - 1]), period },
                     });
@@ -323,9 +357,11 @@ class InstrumentEventProducerService {
             yield new Promise((resolve) => {
                 tulind.indicators.sma.indicator([closes], [period], (err, results) => {
                     resolve({
-                        event: `${candle.granularity}-heikin-ashi-sma-changed`,
-                        time: new Date().toISOString(),
+                        event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_heikin_ashi_sma_changed`],
+                        eventTime: new Date(),
                         candleTime: candle.time,
+                        candleBid: candle.closeBid,
+                        candleAsk: candle.closeAsk,
                         isDispatched: false,
                         payload: { result: this.toFix(results[0][results[0].length - 1]), period },
                     });
@@ -341,9 +377,11 @@ class InstrumentEventProducerService {
             yield new Promise((resolve) => {
                 tulind.indicators.ema.indicator([closes], [period], (err, results) => {
                     resolve({
-                        event: `${candle.granularity}-heikin-ashi-ema-changed`,
-                        time: new Date().toISOString(),
+                        event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_heikin_ashi_ema_changed`],
+                        eventTime: new Date(),
                         candleTime: candle.time,
+                        candleBid: candle.closeBid,
+                        candleAsk: candle.closeAsk,
                         isDispatched: false,
                         payload: { result: this.toFix(results[0][results[0].length - 1]), period },
                     });
@@ -362,9 +400,11 @@ class InstrumentEventProducerService {
             yield new Promise((resolve) => {
                 tulind.indicators.sma.indicator([closes], [period], (err, results) => {
                     resolve({
-                        event: `${candle.granularity}-line-break-sma-changed`,
-                        time: new Date().toISOString(),
+                        event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_line_break_sma_changed`],
+                        eventTime: new Date(),
                         candleTime: candle.time,
+                        candleBid: candle.closeBid,
+                        candleAsk: candle.closeAsk,
                         isDispatched: false,
                         payload: { result: this.toFix(results[0][results[0].length - 1]), period },
                     });
@@ -380,9 +420,11 @@ class InstrumentEventProducerService {
             yield new Promise((resolve) => {
                 tulind.indicators.ema.indicator([closes], [period], (err, results) => {
                     resolve({
-                        event: `${candle.granularity}-line-break-ema-changed`,
-                        time: new Date().toISOString(),
+                        event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_line_break_ema_changed`],
+                        eventTime: new Date(),
                         candleTime: candle.time,
+                        candleBid: candle.closeBid,
+                        candleAsk: candle.closeAsk,
                         isDispatched: false,
                         payload: { result: this.toFix(results[0][results[0].length - 1]), period },
                     });

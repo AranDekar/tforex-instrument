@@ -12,7 +12,7 @@ export interface Candle {
     high: number;
     low: number;
     open: number;
-    time: string;
+    time: Date;
     volume: number;
     granularity: string;
 }
@@ -21,12 +21,12 @@ export interface CandleDocument extends api.models.Candle, Document {
 export interface CandleModel extends Model<CandleDocument> {
     getAllCandles(model: Model<CandleDocument>, granularity: string): Promise<CandleDocument[]>;
     findLastCandle(model: Model<CandleDocument>, granularity: string): Promise<CandleDocument>;
-    findCandleByTime(model: Model<CandleDocument>, time: string, granularityVal: string): Promise<CandleDocument>;
+    findCandleByTime(model: Model<CandleDocument>, time: Date, granularityVal: string): Promise<CandleDocument>;
     findPrevious(
-        model: Model<CandleDocument>, time: string,
+        model: Model<CandleDocument>, time: Date,
         granularity: string): Promise<CandleDocument>;
     findLimit(
-        model: Model<CandleDocument>, time: string,
+        model: Model<CandleDocument>, time: Date,
         granularity: string, limit: number): Promise<CandleDocument[]>;
 }
 
@@ -39,7 +39,7 @@ const schema = new Schema({
     low: { type: Number },
     open: { type: Number },
     volume: { type: Number },
-    time: { type: String },
+    time: { type: Date },
     granularity: { type: String },
 });
 
@@ -68,7 +68,7 @@ schema.statics.findCandleByTime = async (model: Model<CandleDocument>, timeVal: 
 };
 
 schema.statics.findPrevious = async (
-    model: Model<CandleDocument>, time: string,
+    model: Model<CandleDocument>, time: Date,
     granularityVal: string) => {
     return model
         .findOne({ granularity: granularityVal, time: { $lt: time } })
@@ -77,7 +77,7 @@ schema.statics.findPrevious = async (
 };
 
 schema.statics.findLimit = async (
-    model: Model<CandleDocument>, time: string,
+    model: Model<CandleDocument>, time: Date,
     granularityVal: string, limit: number) => {
     return model
         .find({ granularity: granularityVal, time: { $lte: time } })

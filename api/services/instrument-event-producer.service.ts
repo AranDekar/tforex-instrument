@@ -7,7 +7,8 @@ import * as request from 'request';
 import * as tulind from 'tulind';
 import * as api from 'api';
 
-import { InstrumentEvent, CandleModel, HeikinAshiModel, LineBreakModel } from 'api/models';
+import { InstrumentEvent, InstrumentEventModel, CandleModel, HeikinAshiModel, LineBreakModel } from 'api/models';
+import { InstrumentEventEnum } from '../enums';
 
 console.log('TULIND version: ' + tulind.version);
 
@@ -16,9 +17,10 @@ export class InstrumentEventProducerService {
     private candleModel: CandleModel;
     private heikinAshiModel: HeikinAshiModel;
     private lineBreakModel: LineBreakModel;
+    private instrumentEventModel: InstrumentEventModel;
 
     private toFix = (num: number) => Number(num.toFixed(5));
-
+    public constructor(private isBackupStateEnabled = false) { }
     /*
     / candles are the source for this class, so when this class is used,
     / it works based on the existing candles in the DB, and then it provides events
@@ -29,12 +31,12 @@ export class InstrumentEventProducerService {
         this.candleModel = candleService.getModel(instrument);
         this.heikinAshiModel = candleService.getHeikinAshiModel(instrument);
         this.lineBreakModel = candleService.getLineBreakModel(instrument);
-        const instrumentEventModel = this.getInstrumentEventModel(instrument);
-
-        const lastEvent: api.models.InstrumentEvent = await instrumentEventModel.findLastEvent(instrumentEventModel);
+        this.instrumentEventModel = this.getInstrumentEventModel(instrument);
+        const lastEvent: api.models.InstrumentEvent =
+            await this.instrumentEventModel.findLastEvent(this.instrumentEventModel);
         let lastCandles;
         if (lastEvent) {
-            lastCandles = await this.candleModel.find({ time: { $gt: lastEvent.time } }).sort({ time: 1 });
+            lastCandles = await this.candleModel.find({ time: { $gt: lastEvent.candleTime } }).sort({ time: 1 });
         } else {
             lastCandles = await this.candleModel.find().sort({ time: 1 });
         }
@@ -59,8 +61,15 @@ export class InstrumentEventProducerService {
                     break;
             }
         }
-        await instrumentEventModel.create(arrayOfEvents);
+        return arrayOfEvents;
     }
+    public async saveNewEvents(instrument: api.enums.InstrumentEnum, instruments: InstrumentEvent[]) {
+        if (!this.instrumentEventModel) {
+            this.instrumentEventModel = this.getInstrumentEventModel(instrument);
+        }
+        await this.instrumentEventModel.create(instruments);
+    }
+
     public async publishNewEvents(instrument: api.enums.InstrumentEnum) {
         const instrumentEventModel = this.getInstrumentEventModel(instrument);
         if (!instrumentEventModel) {
@@ -73,14 +82,25 @@ export class InstrumentEventProducerService {
     }
 
     private getInstrumentEventModel(instrument: api.enums.InstrumentEnum):
-        api.models.InstrumentEventDocumentOperations {
-        switch (instrument) {
-            case api.enums.InstrumentEnum.AUD_USD:
-                return api.models.audUsdEvents;
-            case api.enums.InstrumentEnum.GBP_USD:
-                return api.models.gbpUsdEvents;
-            case api.enums.InstrumentEnum.EUR_USD:
-                return api.models.eurUsdEvents;
+        api.models.InstrumentEventModel {
+        if (this.isBackupStateEnabled) {
+            switch (instrument) {
+                case api.enums.InstrumentEnum.AUD_USD:
+                    return api.models.audUsdBackupEvents;
+                case api.enums.InstrumentEnum.GBP_USD:
+                    return api.models.gbpUsdBackupEvents;
+                case api.enums.InstrumentEnum.EUR_USD:
+                    return api.models.eurUsdBackupEvents;
+            }
+        } else {
+            switch (instrument) {
+                case api.enums.InstrumentEnum.AUD_USD:
+                    return api.models.audUsdEvents;
+                case api.enums.InstrumentEnum.GBP_USD:
+                    return api.models.gbpUsdEvents;
+                case api.enums.InstrumentEnum.EUR_USD:
+                    return api.models.eurUsdEvents;
+            }
         }
         throw new Error(`instrumentEvent model is undefined for ${instrument}`);
     }
@@ -98,9 +118,11 @@ export class InstrumentEventProducerService {
 
     private async * raiseCandle(candle: api.models.CandleDocument) {
         yield {
-            event: `${candle.granularity}-closed`,
-            time: new Date().toISOString(),
+            event: InstrumentEventEnum[`${candle.granularity.toLowerCase()}_closed`],
+            eventTime: new Date(),
             candleTime: candle.time,
+            candleBid: candle.closeBid,
+            candleAsk: candle.closeAsk,
             isDispatched: false,
             payload: candle,
         };
@@ -121,7 +143,7 @@ export class InstrumentEventProducerService {
         const xHigh = Math.max(candle.high, xOpen, xClose);
         const xLow = Math.min(candle.low, xOpen, xClose);
 
-        const newLocal: any = {
+        const newLocal: api.models.HeikinAshi = {
             open: xOpen,
             close: xClose,
             complete: candle.complete,
@@ -135,9 +157,11 @@ export class InstrumentEventProducerService {
         const model = new this.heikinAshiModel(newLocal);
         await model.save();
         yield {
-            event: `${candle.granularity}-heikin-ashi-closed`,
-            time: new Date().toISOString(),
+            event: InstrumentEventEnum[`${candle.granularity.toLowerCase()}_heikin_ashi_closed`],
+            eventTime: new Date(),
             candleTime: candle.time,
+            candleBid: candle.closeBid,
+            candleAsk: candle.closeAsk,
             isDispatched: false,
             payload: newLocal,
         };
@@ -148,7 +172,7 @@ export class InstrumentEventProducerService {
     }
 
     private async * raiseLineBreak(candle: api.models.CandleDocument) {
-        let newLocal: any;
+        let newLocal: api.models.LineBreak;
 
         const xLines = await this.lineBreakModel.findLimit(
             this.lineBreakModel,
@@ -209,9 +233,11 @@ export class InstrumentEventProducerService {
         const model = new this.lineBreakModel(newLocal);
         await model.save();
         yield {
-            event: `${candle.granularity}-line-break-closed`,
-            time: new Date().toISOString(),
+            event: InstrumentEventEnum[`${candle.granularity.toLowerCase()}_line_break_closed`],
+            eventTime: new Date(),
             candleTime: candle.time,
+            candleBid: candle.closeBid,
+            candleAsk: candle.closeAsk,
             isDispatched: false,
             payload: newLocal,
         };
@@ -236,9 +262,11 @@ export class InstrumentEventProducerService {
 
             tulind.indicators.macd.indicator([closes], [12, 26, 9], (err, results) => {
                 resolve({
-                    event: `${candle.granularity}-macd-changed`,
-                    time: new Date().toISOString(),
+                    event: InstrumentEventEnum[`${candle.granularity.toLowerCase()}_macd_changed`],
+                    eventTime: new Date(),
                     candleTime: candle.time,
+                    candleBid: candle.closeBid,
+                    candleAsk: candle.closeAsk,
                     isDispatched: false,
                     payload: {
                         macd: this.toFix(results[0][results[0].length - 1]),
@@ -264,9 +292,11 @@ export class InstrumentEventProducerService {
         yield new Promise<InstrumentEvent>((resolve) => {
             tulind.indicators.sma.indicator([closes], [period], (err, results) => {
                 resolve({
-                    event: `${candle.granularity}-sma-changed`,
-                    time: new Date().toISOString(),
+                    event: InstrumentEventEnum[`${candle.granularity.toLowerCase()}_sma_changed`],
+                    eventTime: new Date(),
                     candleTime: candle.time,
+                    candleBid: candle.closeBid,
+                    candleAsk: candle.closeAsk,
                     isDispatched: false,
                     payload: { result: this.toFix(results[0][results[0].length - 1]), period },
                 });
@@ -285,9 +315,11 @@ export class InstrumentEventProducerService {
 
             tulind.indicators.ema.indicator([closes], [period], (err, results) => {
                 resolve({
-                    event: `${candle.granularity}-ema-changed`,
-                    time: new Date().toISOString(),
+                    event: InstrumentEventEnum[`${candle.granularity.toLowerCase()}_ema_changed`],
+                    eventTime: new Date(),
                     candleTime: candle.time,
+                    candleBid: candle.closeBid,
+                    candleAsk: candle.closeAsk,
                     isDispatched: false,
                     payload: { result: this.toFix(results[0][results[0].length - 1]), period },
                 });
@@ -310,9 +342,11 @@ export class InstrumentEventProducerService {
 
             tulind.indicators.sma.indicator([closes], [period], (err, results) => {
                 resolve({
-                    event: `${candle.granularity}-heikin-ashi-sma-changed`,
-                    time: new Date().toISOString(),
+                    event: InstrumentEventEnum[`${candle.granularity.toLowerCase()}_heikin_ashi_sma_changed`],
+                    eventTime: new Date(),
                     candleTime: candle.time,
+                    candleBid: candle.closeBid,
+                    candleAsk: candle.closeAsk,
                     isDispatched: false,
                     payload: { result: this.toFix(results[0][results[0].length - 1]), period },
                 });
@@ -331,9 +365,11 @@ export class InstrumentEventProducerService {
         yield new Promise<InstrumentEvent>((resolve) => {
             tulind.indicators.ema.indicator([closes], [period], (err, results) => {
                 resolve({
-                    event: `${candle.granularity}-heikin-ashi-ema-changed`,
-                    time: new Date().toISOString(),
+                    event: InstrumentEventEnum[`${candle.granularity.toLowerCase()}_heikin_ashi_ema_changed`],
+                    eventTime: new Date(),
                     candleTime: candle.time,
+                    candleBid: candle.closeBid,
+                    candleAsk: candle.closeAsk,
                     isDispatched: false,
                     payload: { result: this.toFix(results[0][results[0].length - 1]), period },
                 });
@@ -354,9 +390,11 @@ export class InstrumentEventProducerService {
         yield new Promise<InstrumentEvent>((resolve) => {
             tulind.indicators.sma.indicator([closes], [period], (err, results) => {
                 resolve({
-                    event: `${candle.granularity}-line-break-sma-changed`,
-                    time: new Date().toISOString(),
+                    event: InstrumentEventEnum[`${candle.granularity.toLowerCase()}_line_break_sma_changed`],
+                    eventTime: new Date(),
                     candleTime: candle.time,
+                    candleBid: candle.closeBid,
+                    candleAsk: candle.closeAsk,
                     isDispatched: false,
                     payload: { result: this.toFix(results[0][results[0].length - 1]), period },
                 });
@@ -375,9 +413,11 @@ export class InstrumentEventProducerService {
 
             tulind.indicators.ema.indicator([closes], [period], (err, results) => {
                 resolve({
-                    event: `${candle.granularity}-line-break-ema-changed`,
-                    time: new Date().toISOString(),
+                    event: InstrumentEventEnum[`${candle.granularity.toLowerCase()}_line_break_ema_changed`],
+                    eventTime: new Date(),
                     candleTime: candle.time,
+                    candleBid: candle.closeBid,
+                    candleAsk: candle.closeAsk,
                     isDispatched: false,
                     payload: { result: this.toFix(results[0][results[0].length - 1]), period },
                 });
