@@ -14,10 +14,10 @@ const testTopic = 'tets';
 class TestTopicConsumerProxy {
     connect() {
         console.log(`trying to connect to ${api.shared.Config.settings.kafka_conn_string} in consumer`);
-        let client = new kafka.KafkaClient({
+        const client = new kafka.KafkaClient({
             kafkaHost: api.shared.Config.settings.kafka_conn_string,
         });
-        this._consumer = new kafka.Consumer(client, [
+        this.consumer = new kafka.Consumer(client, [
             { topic: testTopic },
         ], {
             autoCommit: true,
@@ -25,23 +25,23 @@ class TestTopicConsumerProxy {
         });
         // if you don't see any message coming, it may be because you have deleted the topic and the offset
         // is not reset with this client id.
-        this._consumer.on('message', (message) => __awaiter(this, void 0, void 0, function* () {
+        this.consumer.on('message', (message) => __awaiter(this, void 0, void 0, function* () {
             console.log('new message is received');
             if (message && message.value) {
                 console.log(message.value);
             }
         }));
-        this._consumer.on('error', (err) => {
+        this.consumer.on('error', (err) => {
             console.log(err);
         });
     }
     resetOffset() {
-        this._consumer.setOffset(testTopic, 0, 0);
+        this.consumer.setOffset(testTopic, 0, 0);
     }
 }
 exports.TestTopicConsumerProxy = TestTopicConsumerProxy;
 setTimeout(() => __awaiter(this, void 0, void 0, function* () {
-    let prx = new TestTopicConsumerProxy();
+    const prx = new TestTopicConsumerProxy();
     prx.connect();
 }), 2000);
 //# sourceMappingURL=test-topic-consumer.proxy.js.map

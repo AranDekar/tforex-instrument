@@ -11,7 +11,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
 const api = require("api");
 const mongoose = api.shared.DataAccess.mongooseInstance;
-const mongooseBackup = api.shared.DataAccess.mongooseBackupInstance;
 const schema = new mongoose_1.Schema({
     event: {
         type: String, enum: [
@@ -82,8 +81,4 @@ schema.statics.findEventsByTimeEvents = (model, time, events) => __awaiter(this,
 exports.gbpUsdEvents = mongoose.model('gbp_usd_events', schema);
 exports.audUsdEvents = mongoose.model('aud_usd_events', schema);
 exports.eurUsdEvents = mongoose.model('eur_usd_events', schema);
-// --------
-exports.gbpUsdBackupEvents = mongooseBackup.model('gbp_usd_events', schema);
-exports.audUsdBackupEvents = mongooseBackup.model('aud_usd_events', schema);
-exports.eurUsdBackupEvents = mongooseBackup.model('eur_usd_events', schema);
 //# sourceMappingURL=instrument-event.model.js.map

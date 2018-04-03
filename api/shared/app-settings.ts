@@ -16,7 +16,6 @@ export class Config {
                 strategy_base_path: 'http://localhost:10010',
                 ui_base_path: 'http://localhost:8080',
                 mongo_db_connection_string: process.env.MONGO || `mongodb://mongodb/tss`,
-                mongo_db_backup_connection_string: process.env.MONGO || `mongodb://mongodb/tss_backup`,
                 api_key: '1234',
                 kafka_conn_string: process.env.KAFKA || 'kafka:9092',
                 client_id: 'instrument',
@@ -42,7 +41,6 @@ interface AppSettings {
     ui_base_path: string;
     api_key: string;
     mongo_db_connection_string: string;
-    mongo_db_backup_connection_string: string;
     kafka_conn_string: string;
     client_id: string;
     oanda_access_token_key: string;

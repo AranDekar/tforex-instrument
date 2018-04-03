@@ -4,10 +4,9 @@ import * as api from 'api';
 import { InstrumentEventEnum } from '../enums';
 
 const mongoose = api.shared.DataAccess.mongooseInstance;
-const mongooseBackup = api.shared.DataAccess.mongooseBackupInstance;
 
 export interface InstrumentEvent {
-    event: InstrumentEventEnum;
+    event: string;
     eventTime: Date;
     candleTime: Date;
     candleBid: number;
@@ -121,15 +120,4 @@ export let audUsdEvents = mongoose.model<InstrumentEventDocument>(
     'aud_usd_events', schema) as InstrumentEventModel;
 
 export let eurUsdEvents = mongoose.model<InstrumentEventDocument>(
-    'eur_usd_events', schema) as InstrumentEventModel;
-
-// --------
-
-export let gbpUsdBackupEvents = mongooseBackup.model<InstrumentEventDocument>(
-    'gbp_usd_events', schema) as InstrumentEventModel;
-
-export let audUsdBackupEvents = mongooseBackup.model<InstrumentEventDocument>(
-    'aud_usd_events', schema) as InstrumentEventModel;
-
-export let eurUsdBackupEvents = mongooseBackup.model<InstrumentEventDocument>(
     'eur_usd_events', schema) as InstrumentEventModel;

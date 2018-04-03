@@ -39,8 +39,7 @@ const enums_1 = require("../enums");
 console.log('TULIND version: ' + tulind.version);
 Symbol.asyncIterator = Symbol.asyncIterator || Symbol.for('Symbol.asyncIterator');
 class InstrumentEventProducerService {
-    constructor(isBackupStateEnabled = false) {
-        this.isBackupStateEnabled = isBackupStateEnabled;
+    constructor() {
         this.toFix = (num) => Number(num.toFixed(5));
     }
     /*
@@ -98,10 +97,57 @@ class InstrumentEventProducerService {
             var e_1, _c;
         });
     }
-    saveNewEvents(instrument, instruments) {
+    reproduceEvents(instrument) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const candleService = new api.services.CandleService();
+            this.candleModel = candleService.getModel(instrument);
+            this.heikinAshiModel = candleService.getHeikinAshiModel(instrument);
+            this.lineBreakModel = candleService.getLineBreakModel(instrument);
+            this.instrumentEventModel = this.getInstrumentEventModel(instrument);
+            const lastEvent = null;
+            const lastCandles = yield this.candleModel.find().sort({ time: 1 });
+            const arrayOfEvents = [];
+            for (const currCandle of lastCandles) {
+                try {
+                    for (var _a = __asyncValues(this.raiseEvents(currCandle)), _b; _b = yield _a.next(), !_b.done;) {
+                        const event = yield _b.value;
+                        arrayOfEvents.push(event);
+                    }
+                }
+                catch (e_2_1) { e_2 = { error: e_2_1 }; }
+                finally {
+                    try {
+                        if (_b && !_b.done && (_c = _a.return)) yield _c.call(_a);
+                    }
+                    finally { if (e_2) throw e_2.error; }
+                }
+                // process candle and provide event
+                switch (currCandle.granularity) {
+                    case api.enums.GranularityEnum.M5:
+                        break;
+                    case api.enums.GranularityEnum.M15:
+                        break;
+                    case api.enums.GranularityEnum.M30:
+                        break;
+                    case api.enums.GranularityEnum.H1:
+                        break;
+                    case api.enums.GranularityEnum.H4:
+                        break;
+                    case api.enums.GranularityEnum.D:
+                        break;
+                }
+            }
+            return arrayOfEvents;
+            var e_2, _c;
+        });
+    }
+    saveNewEvents(instrument, instruments, deleteFirst = false) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.instrumentEventModel) {
                 this.instrumentEventModel = this.getInstrumentEventModel(instrument);
+            }
+            if (deleteFirst) {
+                yield this.instrumentEventModel.find({}).remove().exec();
             }
             yield this.instrumentEventModel.create(instruments);
         });
@@ -118,25 +164,13 @@ class InstrumentEventProducerService {
         });
     }
     getInstrumentEventModel(instrument) {
-        if (this.isBackupStateEnabled) {
-            switch (instrument) {
-                case api.enums.InstrumentEnum.AUD_USD:
-                    return api.models.audUsdBackupEvents;
-                case api.enums.InstrumentEnum.GBP_USD:
-                    return api.models.gbpUsdBackupEvents;
-                case api.enums.InstrumentEnum.EUR_USD:
-                    return api.models.eurUsdBackupEvents;
-            }
-        }
-        else {
-            switch (instrument) {
-                case api.enums.InstrumentEnum.AUD_USD:
-                    return api.models.audUsdEvents;
-                case api.enums.InstrumentEnum.GBP_USD:
-                    return api.models.gbpUsdEvents;
-                case api.enums.InstrumentEnum.EUR_USD:
-                    return api.models.eurUsdEvents;
-            }
+        switch (instrument) {
+            case api.enums.InstrumentEnum.AUD_USD:
+                return api.models.audUsdEvents;
+            case api.enums.InstrumentEnum.GBP_USD:
+                return api.models.gbpUsdEvents;
+            case api.enums.InstrumentEnum.EUR_USD:
+                return api.models.eurUsdEvents;
         }
         throw new Error(`instrumentEvent model is undefined for ${instrument}`);
     }
@@ -153,7 +187,7 @@ class InstrumentEventProducerService {
     raiseCandle(candle) {
         return __asyncGenerator(this, arguments, function* raiseCandle_1() {
             yield {
-                event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_closed`],
+                event: `${candle.granularity.toLowerCase()}_closed`,
                 eventTime: new Date(),
                 candleTime: candle.time,
                 candleBid: candle.closeBid,
@@ -188,7 +222,7 @@ class InstrumentEventProducerService {
             const model = new this.heikinAshiModel(newLocal);
             yield __await(model.save());
             yield {
-                event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_heikin_ashi_closed`],
+                event: `${candle.granularity.toLowerCase()}_heikin_ashi_closed`,
                 eventTime: new Date(),
                 candleTime: candle.time,
                 candleBid: candle.closeBid,
@@ -287,7 +321,7 @@ class InstrumentEventProducerService {
             yield new Promise((resolve) => {
                 tulind.indicators.macd.indicator([closes], [12, 26, 9], (err, results) => {
                     resolve({
-                        event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_macd_changed`],
+                        event: `${candle.granularity.toLowerCase()}_macd_changed`,
                         eventTime: new Date(),
                         candleTime: candle.time,
                         candleBid: candle.closeBid,
@@ -314,7 +348,7 @@ class InstrumentEventProducerService {
             yield new Promise((resolve) => {
                 tulind.indicators.sma.indicator([closes], [period], (err, results) => {
                     resolve({
-                        event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_sma_changed`],
+                        event: `${candle.granularity.toLowerCase()}_sma_changed`,
                         eventTime: new Date(),
                         candleTime: candle.time,
                         candleBid: candle.closeBid,
@@ -334,7 +368,7 @@ class InstrumentEventProducerService {
             yield new Promise((resolve) => {
                 tulind.indicators.ema.indicator([closes], [period], (err, results) => {
                     resolve({
-                        event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_ema_changed`],
+                        event: `${candle.granularity.toLowerCase()}_ema_changed`,
                         eventTime: new Date(),
                         candleTime: candle.time,
                         candleBid: candle.closeBid,
@@ -357,7 +391,7 @@ class InstrumentEventProducerService {
             yield new Promise((resolve) => {
                 tulind.indicators.sma.indicator([closes], [period], (err, results) => {
                     resolve({
-                        event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_heikin_ashi_sma_changed`],
+                        event: `${candle.granularity.toLowerCase()}_heikin_ashi_sma_changed`,
                         eventTime: new Date(),
                         candleTime: candle.time,
                         candleBid: candle.closeBid,
@@ -377,7 +411,7 @@ class InstrumentEventProducerService {
             yield new Promise((resolve) => {
                 tulind.indicators.ema.indicator([closes], [period], (err, results) => {
                     resolve({
-                        event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_heikin_ashi_ema_changed`],
+                        event: `${candle.granularity.toLowerCase()}_heikin_ashi_ema_changed`,
                         eventTime: new Date(),
                         candleTime: candle.time,
                         candleBid: candle.closeBid,
@@ -400,7 +434,7 @@ class InstrumentEventProducerService {
             yield new Promise((resolve) => {
                 tulind.indicators.sma.indicator([closes], [period], (err, results) => {
                     resolve({
-                        event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_line_break_sma_changed`],
+                        event: `${candle.granularity.toLowerCase()}_line_break_sma_changed`,
                         eventTime: new Date(),
                         candleTime: candle.time,
                         candleBid: candle.closeBid,
@@ -420,7 +454,7 @@ class InstrumentEventProducerService {
             yield new Promise((resolve) => {
                 tulind.indicators.ema.indicator([closes], [period], (err, results) => {
                     resolve({
-                        event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_line_break_ema_changed`],
+                        event: `${candle.granularity.toLowerCase()}_line_break_ema_changed`,
                         eventTime: new Date(),
                         candleTime: candle.time,
                         candleBid: candle.closeBid,

@@ -62,12 +62,12 @@ export class SupportTopicConsumerProxy {
                         case produceEvents:
                             lock.acquire(key, async () => {
                                 const instrumentEventProducerService =
-                                    new api.services.InstrumentEventProducerService(true);
+                                    new api.services.InstrumentEventProducerService();
 
                                 const service = new api.services.CandleSyncService();
                                 const events = await instrumentEventProducerService.produceNewEvents(item.instrument);
                                 events.forEach((e) => e.isDispatched = true);
-                                await instrumentEventProducerService.saveNewEvents(item.instrument, events);
+                                await instrumentEventProducerService.saveNewEvents(item.instrument, events, true);
                                 return;
                             }, opts).then(() => {
                                 console.log('lock released');

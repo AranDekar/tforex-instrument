@@ -13,7 +13,6 @@ class Config {
                 strategy_base_path: 'http://localhost:10010',
                 ui_base_path: 'http://localhost:8080',
                 mongo_db_connection_string: process.env.MONGO || `mongodb://mongodb/tss`,
-                mongo_db_backup_connection_string: process.env.MONGO || `mongodb://mongodb/tss_backup`,
                 api_key: '1234',
                 kafka_conn_string: process.env.KAFKA || 'kafka:9092',
                 client_id: 'instrument',
