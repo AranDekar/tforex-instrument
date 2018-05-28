@@ -73,9 +73,12 @@ schema.statics.findLastEvent = (model) => __awaiter(this, void 0, void 0, functi
 });
 schema.statics.findEventsByTimeEvents = (model, time, events) => __awaiter(this, void 0, void 0, function* () {
     return model
-        .find({ candleTime: { $gt: time }, type: { $in: events } })
+        .find({
+        candleTime: { $gt: time },
+        event: { $in: events },
+    })
         .sort({ candleTime: 1 })
-        .limit(1000)
+        .limit(250)
         .exec();
 });
 exports.gbpUsdEvents = mongoose.model('gbp_usd_events', schema);

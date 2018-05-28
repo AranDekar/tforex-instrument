@@ -107,9 +107,13 @@ schema.statics.findEventsByTimeEvents = async (
     model: Model<InstrumentEventDocument>, time: Date,
     events: string[]) => {
     return model
-        .find({ candleTime: { $gt: time }, type: { $in: events } })
+        // tslint:disable-next-line:object-literal-key-quotes
+        .find({
+            candleTime: { $gt: time },
+            event: { $in: events },
+        })
         .sort({ candleTime: 1 })
-        .limit(1000)
+        .limit(250)
         .exec();
 };
 

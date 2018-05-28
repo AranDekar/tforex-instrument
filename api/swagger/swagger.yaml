@@ -84,6 +84,8 @@ paths:
           type: string
           enum:
             - AUD_USD
+            - GBP_USD
+            - EUR_USD
         - name: candleTime
           description: if provided, the limited number of events are returned where their candle time is greater than this
           type: string
@@ -93,6 +95,7 @@ paths:
           description: a comma separated list of events that are required to return
           type: string
           in: query
+          required: true
       responses:
         "200":
           description: Success
@@ -170,37 +173,37 @@ definitions:
         format: date-time
       payload:
         type: object
-  Candle:
-    type: object
-    properties:
-      closeAsk:
-        type: number
-      closeBid:
-        type: number
-      complete:
-        type: boolean
-      highAsk:
-        type: number
-      highBid:
-        type: number
-      lowAsk:
-        type: number
-      lowBid:
-        type: number
-      openAsk:
-        type: number
-      openBid:
-        type: number
-      time:
-        type: string
-      volume:
-        type: number    
-  EventResponse:
-    required:
-      - message
-    properties:
-      message:
-        type: string
+  # Candle:
+  #   type: object
+  #   properties:
+  #     closeAsk:
+  #       type: number
+  #     closeBid:
+  #       type: number
+  #     complete:
+  #       type: boolean
+  #     highAsk:
+  #       type: number
+  #     highBid:
+  #       type: number
+  #     lowAsk:
+  #       type: number
+  #     lowBid:
+  #       type: number
+  #     openAsk:
+  #       type: number
+  #     openBid:
+  #       type: number
+  #     time:
+  #       type: string
+  #     volume:
+  #       type: number    
+  # EventResponse:
+  #   required:
+  #     - message
+  #   properties:
+  #     message:
+  #       type: string
   ErrorResponse:
     required:
       - message

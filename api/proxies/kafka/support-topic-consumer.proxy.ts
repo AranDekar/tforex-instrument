@@ -65,7 +65,7 @@ export class SupportTopicConsumerProxy {
                                     new api.services.InstrumentEventProducerService();
 
                                 const service = new api.services.CandleSyncService();
-                                const events = await instrumentEventProducerService.produceNewEvents(item.instrument);
+                                const events = await instrumentEventProducerService.reproduceEvents(item.instrument);
                                 events.forEach((e) => e.isDispatched = true);
                                 await instrumentEventProducerService.saveNewEvents(item.instrument, events, true);
                                 return;
@@ -100,4 +100,4 @@ export class SupportTopicConsumerProxy {
 setTimeout(async () => {
     const prx = new SupportTopicConsumerProxy();
     prx.connect();
-}, 1000);
+}, 50000);

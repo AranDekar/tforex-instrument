@@ -35,7 +35,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // const tulind = require('tulind/lib/binding/Release/node-v59-darwin-x64/tulind');
 const tulind = require("tulind");
 const api = require("api");
-const enums_1 = require("../enums");
 console.log('TULIND version: ' + tulind.version);
 Symbol.asyncIterator = Symbol.asyncIterator || Symbol.for('Symbol.asyncIterator');
 class InstrumentEventProducerService {
@@ -104,7 +103,8 @@ class InstrumentEventProducerService {
             this.heikinAshiModel = candleService.getHeikinAshiModel(instrument);
             this.lineBreakModel = candleService.getLineBreakModel(instrument);
             this.instrumentEventModel = this.getInstrumentEventModel(instrument);
-            const lastEvent = null;
+            yield this.lineBreakModel.find({}).remove().exec();
+            yield this.heikinAshiModel.find({}).remove().exec();
             const lastCandles = yield this.candleModel.find().sort({ time: 1 });
             const arrayOfEvents = [];
             for (const currCandle of lastCandles) {
@@ -296,7 +296,7 @@ class InstrumentEventProducerService {
             const model = new this.lineBreakModel(newLocal);
             yield __await(model.save());
             yield {
-                event: enums_1.InstrumentEventEnum[`${candle.granularity.toLowerCase()}_line_break_closed`],
+                event: `${candle.granularity.toLowerCase()}_line_break_closed`,
                 eventTime: new Date(),
                 candleTime: candle.time,
                 candleBid: candle.closeBid,

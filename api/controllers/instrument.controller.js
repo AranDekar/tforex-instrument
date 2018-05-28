@@ -31,7 +31,7 @@ function getEvents(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const service = new api.services.InstrumentService();
-            const data = yield service.getEvents(req.swagger.params.instrument, req.swagger.params.candleTime, req.swagger.params.events);
+            const data = yield service.getEvents(req.swagger.params.instrument.value, req.swagger.params.candleTime.value, req.swagger.params.events.value);
             res.json(data);
         }
         catch (err) {

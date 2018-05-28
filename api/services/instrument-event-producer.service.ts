@@ -70,7 +70,10 @@ export class InstrumentEventProducerService {
         this.heikinAshiModel = candleService.getHeikinAshiModel(instrument);
         this.lineBreakModel = candleService.getLineBreakModel(instrument);
         this.instrumentEventModel = this.getInstrumentEventModel(instrument);
-        const lastEvent = null;
+
+        await this.lineBreakModel.find({}).remove().exec();
+        await this.heikinAshiModel.find({}).remove().exec();
+
         const lastCandles = await this.candleModel.find().sort({ time: 1 });
         const arrayOfEvents: InstrumentEvent[] = [];
         for (const currCandle of lastCandles) {
@@ -260,7 +263,7 @@ export class InstrumentEventProducerService {
         const model = new this.lineBreakModel(newLocal);
         await model.save();
         yield {
-            event: InstrumentEventEnum[`${candle.granularity.toLowerCase()}_line_break_closed`],
+            event: `${candle.granularity.toLowerCase()}_line_break_closed`,
             eventTime: new Date(),
             candleTime: candle.time,
             candleBid: candle.closeBid,

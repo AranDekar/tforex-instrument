@@ -31,7 +31,8 @@ class InstrumentService {
                 eventsArr = events.split(',');
             }
             const model = this.getInstrumentEventModel(title);
-            return yield model.findEventsByTimeEvents(model, candleTime, eventsArr);
+            const data = yield model.findEventsByTimeEvents(model, candleTime, eventsArr);
+            return data;
         });
     }
     sync() {

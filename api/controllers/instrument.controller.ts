@@ -19,9 +19,9 @@ export async function getInstruments(req, res, next) {
 export async function getEvents(req, res, next) {
     try {
         const service = new api.services.InstrumentService();
-        const data = await service.getEvents(req.swagger.params.instrument,
-            req.swagger.params.candleTime,
-            req.swagger.params.events);
+        const data = await service.getEvents(req.swagger.params.instrument.value,
+            req.swagger.params.candleTime.value,
+            req.swagger.params.events.value);
         res.json(data);
     } catch (err) {
         res.statusCode = 500; // bad server

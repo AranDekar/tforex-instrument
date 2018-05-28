@@ -24,7 +24,8 @@ export class InstrumentService {
         }
 
         const model = this.getInstrumentEventModel(title);
-        return await model.findEventsByTimeEvents(model, candleTime, eventsArr);
+        const data = await model.findEventsByTimeEvents(model, candleTime, eventsArr);
+        return data;
     }
 
     public async sync() {

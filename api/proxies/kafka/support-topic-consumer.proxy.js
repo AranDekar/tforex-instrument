@@ -64,7 +64,7 @@ class SupportTopicConsumerProxy {
                             lock.acquire(key, () => __awaiter(this, void 0, void 0, function* () {
                                 const instrumentEventProducerService = new api.services.InstrumentEventProducerService();
                                 const service = new api.services.CandleSyncService();
-                                const events = yield instrumentEventProducerService.produceNewEvents(item.instrument);
+                                const events = yield instrumentEventProducerService.reproduceEvents(item.instrument);
                                 events.forEach((e) => e.isDispatched = true);
                                 yield instrumentEventProducerService.saveNewEvents(item.instrument, events, true);
                                 return;
@@ -98,5 +98,5 @@ exports.SupportTopicConsumerProxy = SupportTopicConsumerProxy;
 setTimeout(() => __awaiter(this, void 0, void 0, function* () {
     const prx = new SupportTopicConsumerProxy();
     prx.connect();
-}), 1000);
+}), 50000);
 //# sourceMappingURL=support-topic-consumer.proxy.js.map
