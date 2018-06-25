@@ -1,8 +1,7 @@
 import * as kafka from 'kafka-node';
+import * as  asyncLock from 'async-lock';
 
 import * as api from 'api';
-
-const asyncLock = require('async-lock');
 
 const supportTopic = 'support';
 const importInstruments = 'import_instruments';
@@ -30,8 +29,8 @@ export class SupportTopicConsumerProxy {
         // if you don't see any message coming, it may be because you have deleted the topic and the offset
         // is not reset with this client id.
         const lock = new asyncLock();
-        const key = null;
-        const opts = null;
+        const key: string = '';
+        const opts = undefined;
         this.consumer.on('message', async (message: any) => {
             if (message && message.value) {
                 try {
@@ -65,9 +64,9 @@ export class SupportTopicConsumerProxy {
                                     new api.services.InstrumentEventProducerService();
 
                                 const service = new api.services.CandleSyncService();
-                                const events = await instrumentEventProducerService.reproduceEvents(item.instrument);
-                                events.forEach((e) => e.isDispatched = true);
-                                await instrumentEventProducerService.saveNewEvents(item.instrument, events, true);
+                                await instrumentEventProducerService.reproduceEvents(item.instrument);
+                                // events.forEach((e) => e.isDispatched = true);
+                                // await instrumentEventProducerService.saveNewEvents(item.instrument, events, true);
                                 return;
                             }, opts).then(() => {
                                 console.log('lock released');

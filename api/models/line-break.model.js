@@ -1,12 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
 const api = require("../../api");
@@ -22,23 +14,20 @@ const schema = new mongoose_1.Schema({
     number: { type: Number },
 });
 schema.index({ time: 1 }); // schema level ascending index on time
-schema.statics.findPrevious = (model, time, granularityVal) => __awaiter(this, void 0, void 0, function* () {
+schema.statics.findPrevious = async (model, time, granularityVal) => {
     return model
         .findOne({ granularity: granularityVal, time: { $lt: time } })
         .sort({ time: -1 })
         .exec();
-});
-schema.statics.findLimit = (model, time, granularityVal, limit) => __awaiter(this, void 0, void 0, function* () {
+};
+schema.statics.findLimit = async (model, time, granularityVal, limit) => {
     return model
         .find({ granularity: granularityVal, time: { $lte: time } })
         .sort({ time: -1 })
         .limit(limit)
         .exec();
-});
-class LineBreaks {
-}
-LineBreaks.audUsd = mongoose.model('aud-usd-line-break', schema);
-LineBreaks.gbpUsd = mongoose.model('gbp-usd-line-break', schema);
-LineBreaks.eurUsd = mongoose.model('eur-usd-line-break', schema);
-exports.LineBreaks = LineBreaks;
+};
+exports.audUsdLineBreaksModel = mongoose.model('aud_usd_line_breaks', schema);
+exports.gbpUsdLineBreaksModel = mongoose.model('gbp_usd_line_breaks', schema);
+exports.eurUsdLineBreaksModel = mongoose.model('eur_usd_line_breaks', schema);
 //# sourceMappingURL=line-break.model.js.map

@@ -1,16 +1,8 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const kafka = require("kafka-node");
+const asyncLock = require("async-lock");
 const api = require("api");
-const asyncLock = require('async-lock');
 const supportTopic = 'support';
 const importInstruments = 'import_instruments';
 const importCandles = 'import_candles';
@@ -31,44 +23,44 @@ class SupportTopicConsumerProxy {
         // if you don't see any message coming, it may be because you have deleted the topic and the offset
         // is not reset with this client id.
         const lock = new asyncLock();
-        const key = null;
-        const opts = null;
-        this.consumer.on('message', (message) => __awaiter(this, void 0, void 0, function* () {
+        const key = '';
+        const opts = undefined;
+        this.consumer.on('message', async (message) => {
             if (message && message.value) {
                 try {
                     const item = JSON.parse(message.value);
                     switch (item.command) {
                         case importInstruments:
-                            lock.acquire(key, () => __awaiter(this, void 0, void 0, function* () {
+                            lock.acquire(key, async () => {
                                 const svc = new api.services.InstrumentService();
-                                yield svc.sync();
+                                await svc.sync();
                                 return;
-                            }), opts).then(() => {
+                            }, opts).then(() => {
                                 console.log('lock released');
                             }).catch((err) => {
                                 console.error(err.message);
                             });
                             break;
                         case importCandles:
-                            lock.acquire(key, () => __awaiter(this, void 0, void 0, function* () {
+                            lock.acquire(key, async () => {
                                 const service = new api.services.CandleSyncService();
-                                yield service.sync(item.instrument);
+                                await service.sync(item.instrument);
                                 return;
-                            }), opts).then(() => {
+                            }, opts).then(() => {
                                 console.log('lock released');
                             }).catch((err) => {
                                 console.error(err.message);
                             });
                             break;
                         case produceEvents:
-                            lock.acquire(key, () => __awaiter(this, void 0, void 0, function* () {
+                            lock.acquire(key, async () => {
                                 const instrumentEventProducerService = new api.services.InstrumentEventProducerService();
                                 const service = new api.services.CandleSyncService();
-                                const events = yield instrumentEventProducerService.reproduceEvents(item.instrument);
-                                events.forEach((e) => e.isDispatched = true);
-                                yield instrumentEventProducerService.saveNewEvents(item.instrument, events, true);
+                                await instrumentEventProducerService.reproduceEvents(item.instrument);
+                                // events.forEach((e) => e.isDispatched = true);
+                                // await instrumentEventProducerService.saveNewEvents(item.instrument, events, true);
                                 return;
-                            }), opts).then(() => {
+                            }, opts).then(() => {
                                 console.log('lock released');
                             }).catch((err) => {
                                 console.error(err.message);
@@ -81,13 +73,13 @@ class SupportTopicConsumerProxy {
                     return;
                 }
             }
-        }));
+        });
         this.consumer.on('error', (err) => {
             console.log(err);
-            setTimeout(() => __awaiter(this, void 0, void 0, function* () {
+            setTimeout(async () => {
                 const prx = new SupportTopicConsumerProxy();
                 prx.connect();
-            }), 5000);
+            }, 5000);
         });
     }
     resetOffset() {
@@ -95,8 +87,8 @@ class SupportTopicConsumerProxy {
     }
 }
 exports.SupportTopicConsumerProxy = SupportTopicConsumerProxy;
-setTimeout(() => __awaiter(this, void 0, void 0, function* () {
+setTimeout(async () => {
     const prx = new SupportTopicConsumerProxy();
     prx.connect();
-}), 50000);
+}, 50000);
 //# sourceMappingURL=support-topic-consumer.proxy.js.map

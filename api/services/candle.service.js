@@ -1,23 +1,13 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const api = require("../../api");
 class CandleService {
-    get(instrument, granularity) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const candleModel = this.getModel(api.enums.InstrumentEnum[instrument]);
-            if (!candleModel) {
-                throw new Error('cannot get the candle model!');
-            }
-            return yield candleModel.getAllCandles(candleModel, granularity);
-        });
+    async get(instrument, granularity) {
+        const candleModel = this.getModel(api.enums.InstrumentEnum[instrument]);
+        if (!candleModel) {
+            throw new Error('cannot get the candle model!');
+        }
+        return await candleModel.getAllCandles(candleModel, granularity);
     }
     /**
      * obsolete
@@ -56,33 +46,33 @@ class CandleService {
     getModel(instrument) {
         switch (instrument) {
             case api.enums.InstrumentEnum.AUD_USD:
-                return api.models.Candles.audUsd;
+                return api.models.audUsdCandlesModel;
             case api.enums.InstrumentEnum.GBP_USD:
-                return api.models.Candles.gbpUsd;
+                return api.models.gbpUsdCandlesModel;
             case api.enums.InstrumentEnum.EUR_USD:
-                return api.models.Candles.eurUsd;
+                return api.models.eurUsdCandlesModel;
         }
         throw new Error(`CandleModel is undefined for ${instrument}`);
     }
     getHeikinAshiModel(instrument) {
         switch (instrument) {
             case api.enums.InstrumentEnum.AUD_USD:
-                return api.models.HeikinAshis.audUsd;
+                return api.models.audUsdHeikinAshisModel;
             case api.enums.InstrumentEnum.GBP_USD:
-                return api.models.HeikinAshis.gbpUsd;
+                return api.models.gbpUsdHeikinAshisModel;
             case api.enums.InstrumentEnum.EUR_USD:
-                return api.models.HeikinAshis.eurUsd;
+                return api.models.eurUsdHeikinAshisModel;
         }
         throw new Error(`HeikinAshiModel is undefined for ${instrument}`);
     }
     getLineBreakModel(instrument) {
         switch (instrument) {
             case api.enums.InstrumentEnum.AUD_USD:
-                return api.models.LineBreaks.audUsd;
+                return api.models.audUsdLineBreaksModel;
             case api.enums.InstrumentEnum.GBP_USD:
-                return api.models.LineBreaks.gbpUsd;
+                return api.models.gbpUsdLineBreaksModel;
             case api.enums.InstrumentEnum.EUR_USD:
-                return api.models.LineBreaks.eurUsd;
+                return api.models.eurUsdLineBreaksModel;
         }
         throw new Error(`HeikinAshiModel is undefined for ${instrument}`);
     }

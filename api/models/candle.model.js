@@ -1,12 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
 const api = require("api");
@@ -24,42 +16,39 @@ const schema = new mongoose_1.Schema({
     granularity: { type: String },
 });
 schema.index({ granularity: 1, time: 1 }); // schema level ascending index on time
-schema.statics.getAllCandles = (model, granularityVal) => __awaiter(this, void 0, void 0, function* () {
+schema.statics.getAllCandles = async (model, granularityVal) => {
     return model
         .find()
         .where({ granularity: granularityVal })
         .sort({ time: 1 })
         .exec();
-});
-schema.statics.findLastCandle = (model, granularityVal) => __awaiter(this, void 0, void 0, function* () {
+};
+schema.statics.findLastCandle = async (model, granularityVal) => {
     return model
         .findOne()
         .where({ granularity: granularityVal })
         .sort({ time: -1 })
         .exec();
-});
-schema.statics.findCandleByTime = (model, timeVal, granularityVal) => __awaiter(this, void 0, void 0, function* () {
+};
+schema.statics.findCandleByTime = async (model, timeVal, granularityVal) => {
     return model
         .findOne({ time: timeVal, granularity: granularityVal })
         .exec();
-});
-schema.statics.findPrevious = (model, time, granularityVal) => __awaiter(this, void 0, void 0, function* () {
+};
+schema.statics.findPrevious = async (model, time, granularityVal) => {
     return model
         .findOne({ granularity: granularityVal, time: { $lt: time } })
         .sort({ time: -1 })
         .exec();
-});
-schema.statics.findLimit = (model, time, granularityVal, limit) => __awaiter(this, void 0, void 0, function* () {
+};
+schema.statics.findLimit = async (model, time, granularityVal, limit) => {
     return model
         .find({ granularity: granularityVal, time: { $lte: time } })
         .sort({ time: -1 })
         .limit(limit)
         .exec();
-});
-class Candles {
-}
-Candles.audUsd = mongoose.model('aud-usd-candles', schema);
-Candles.gbpUsd = mongoose.model('gbp-usd-candles', schema);
-Candles.eurUsd = mongoose.model('eur-usd-candles', schema);
-exports.Candles = Candles;
+};
+exports.audUsdCandlesModel = mongoose.model('aud_usd_candles', schema);
+exports.gbpUsdCandlesModel = mongoose.model('gbp_usd_candles', schema);
+exports.eurUsdCandlesModel = mongoose.model('eur_usd_candles', schema);
 //# sourceMappingURL=candle.model.js.map

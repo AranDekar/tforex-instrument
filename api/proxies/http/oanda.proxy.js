@@ -1,12 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const oanda = require('oanda-adapter');
 const api = require("../../../api");
@@ -21,72 +13,68 @@ class OandaProxy {
             accessToken: api.shared.Config.settings.oanda_access_token_key,
         });
     }
-    getCandles(instrument, start, end, granularity) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (api.shared.Config.settings.mockup_oanda) {
-                return Promise.resolve([{
-                        closeAsk: 0.72824,
-                        closeBid: 0.72809,
-                        complete: true,
-                        highAsk: 0.72838,
-                        highBid: 0.72821,
-                        lowAsk: 0.72761,
-                        lowBid: 0.72744,
-                        openAsk: 0.72761,
-                        openBid: 0.72744,
-                        time: end,
-                        volume: 56,
-                    }]);
-            }
-            else {
-                return new Promise((resolve, reject) => {
-                    this.client.getCandles(api.enums.InstrumentEnum[instrument], start.toISOString(), end.toISOString(), api.enums.GranularityEnum[granularity], (err, candles) => {
-                        if (err) {
-                            return reject(err);
-                        }
-                        candles.forEach((element) => {
-                            element.high = Number(((element.highAsk + element.highBid) / 2).toFixed(5));
-                            element.low = Number(((element.lowAsk + element.lowBid) / 2).toFixed(5));
-                            element.open = Number(((element.openAsk + element.openBid) / 2).toFixed(5));
-                            element.closeMid = Number(((element.closeAsk + element.closeBid) / 2).toFixed(5));
-                            element.closeAsk = Number(element.closeAsk.toFixed(5));
-                            element.closeBid = Number(element.closeBid.toFixed(5));
-                            element.granularity = granularity;
-                            element.time = new Date(element.time / 1000);
-                        });
-                        return resolve(candles);
+    async getCandles(instrument, start, end, granularity) {
+        if (api.shared.Config.settings.mockup_oanda) {
+            return Promise.resolve([{
+                    closeAsk: 0.72824,
+                    closeBid: 0.72809,
+                    complete: true,
+                    highAsk: 0.72838,
+                    highBid: 0.72821,
+                    lowAsk: 0.72761,
+                    lowBid: 0.72744,
+                    openAsk: 0.72761,
+                    openBid: 0.72744,
+                    time: end,
+                    volume: 56,
+                }]);
+        }
+        else {
+            return new Promise((resolve, reject) => {
+                this.client.getCandles(api.enums.InstrumentEnum[instrument], start.toISOString(), end.toISOString(), api.enums.GranularityEnum[granularity], (err, candles) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    candles.forEach((element) => {
+                        element.high = Number(((element.highAsk + element.highBid) / 2).toFixed(5));
+                        element.low = Number(((element.lowAsk + element.lowBid) / 2).toFixed(5));
+                        element.open = Number(((element.openAsk + element.openBid) / 2).toFixed(5));
+                        element.closeMid = Number(((element.closeAsk + element.closeBid) / 2).toFixed(5));
+                        element.closeAsk = Number(element.closeAsk.toFixed(5));
+                        element.closeBid = Number(element.closeBid.toFixed(5));
+                        element.granularity = granularity;
+                        element.time = new Date(element.time / 1000);
                     });
+                    return resolve(candles);
                 });
-            }
-        });
+            });
+        }
     }
-    getInstruments() {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (api.shared.Config.settings.mockup_oanda) {
-                return Promise.resolve([{
-                        displayName: 'AUD/USD',
-                        halted: false,
-                        instrument: 'AUD_USD',
-                        marginRate: 0.003333,
-                        maxTradeUnits: 10000000,
-                        maxTrailingStop: 10000,
-                        minTrailingStop: 5,
-                        pip: '0.0001',
-                        precision: '0.00001',
-                        granularities: [],
-                    }]);
-            }
-            else {
-                return new Promise((resolve, reject) => {
-                    this.client.getInstruments(api.shared.Config.settings.oanda_account_number, (err, instruments) => {
-                        if (err) {
-                            return reject(err);
-                        }
-                        return resolve(instruments);
-                    });
+    async getInstruments() {
+        if (api.shared.Config.settings.mockup_oanda) {
+            return Promise.resolve([{
+                    displayName: 'AUD/USD',
+                    halted: false,
+                    instrument: 'AUD_USD',
+                    marginRate: 0.003333,
+                    maxTradeUnits: 10000000,
+                    maxTrailingStop: 10000,
+                    minTrailingStop: 5,
+                    pip: '0.0001',
+                    precision: '0.00001',
+                    granularities: [],
+                }]);
+        }
+        else {
+            return new Promise((resolve, reject) => {
+                this.client.getInstruments(api.shared.Config.settings.oanda_account_number, (err, instruments) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    return resolve(instruments);
                 });
-            }
-        });
+            });
+        }
     }
 }
 exports.OandaProxy = OandaProxy;

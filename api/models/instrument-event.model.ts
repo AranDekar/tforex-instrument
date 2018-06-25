@@ -6,13 +6,13 @@ import { InstrumentEventEnum } from '../enums';
 const mongoose = api.shared.DataAccess.mongooseInstance;
 
 export interface InstrumentEvent {
-    event: string;
-    eventTime: Date;
+    name: string;
+    time: Date;
     candleTime: Date;
-    candleBid: number;
-    candleAsk: number;
+    bidPrice: number;
+    askPrice: number;
     isDispatched: boolean;
-    payload: {};
+    context: {};
 }
 export interface InstrumentEventDocument extends InstrumentEvent, Document {
 }
@@ -24,7 +24,7 @@ export interface InstrumentEventModel extends Model<InstrumentEventDocument> {
 }
 
 const schema = new Schema({
-    event: {
+    name: {
         type: String, enum: [
             'm5_closed', 'm15_closed', 'm30_closed', 'h1_closed', 'h4_closed', 'd_closed',
 
@@ -81,11 +81,11 @@ const schema = new Schema({
         ],
     },
     isDispatched: { type: Boolean, default: false },
-    eventTime: { type: Date },
+    time: { type: Date },
     candleTime: { type: Date },
-    candleBid: { type: Number },
-    candleAsk: { type: Number },
-    payload: { type: Schema.Types.Mixed },
+    bidPrice: { type: Number },
+    askPrice: { type: Number },
+    context: { type: Schema.Types.Mixed },
 });
 
 schema.index({ candleTime: 1 }); // schema level ascending index on candleTime
@@ -105,23 +105,20 @@ schema.statics.findLastEvent = async (model: Model<InstrumentEventDocument>) => 
 
 schema.statics.findEventsByTimeEvents = async (
     model: Model<InstrumentEventDocument>, time: Date,
-    events: string[]) => {
+    names: string[]) => {
     return model
         // tslint:disable-next-line:object-literal-key-quotes
         .find({
             candleTime: { $gt: time },
-            event: { $in: events },
+            name: { $in: names },
         })
         .sort({ candleTime: 1 })
         .limit(250)
         .exec();
 };
 
-export let gbpUsdEvents = mongoose.model<InstrumentEventDocument>(
-    'gbp_usd_events', schema) as InstrumentEventModel;
+export let gbpUsdEvents = mongoose.model<InstrumentEventDocument>('gbp_usd_events', schema) as InstrumentEventModel;
 
-export let audUsdEvents = mongoose.model<InstrumentEventDocument>(
-    'aud_usd_events', schema) as InstrumentEventModel;
+export let audUsdEvents = mongoose.model<InstrumentEventDocument>('aud_usd_events', schema) as InstrumentEventModel;
 
-export let eurUsdEvents = mongoose.model<InstrumentEventDocument>(
-    'eur_usd_events', schema) as InstrumentEventModel;
+export let eurUsdEvents = mongoose.model<InstrumentEventDocument>('eur_usd_events', schema) as InstrumentEventModel;

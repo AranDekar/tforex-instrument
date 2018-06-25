@@ -158,21 +158,32 @@ definitions:
   InstrumentEvent:
     type: object
     required:
-      - event
-      - eventTime
+      - name
+      - time
       - candleTime
-      - payload
+      - bidPrice
+      - askPrice
+      - isDispatched
+      - context
     properties:
-      event:
+      name:
         type: string
-      eventTime:
+      time:
         type: string
         format: date-time
       candleTime:
         type: string
         format: date-time
-      payload:
+      bidPrice:
+        type: number
+      askPrice:
+        type: number
+      isDispatched:
+        type: boolean
+      context:
         type: object
+      
+      
   # Candle:
   #   type: object
   #   properties:

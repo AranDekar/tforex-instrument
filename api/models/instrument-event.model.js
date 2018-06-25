@@ -1,18 +1,10 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
 const api = require("api");
 const mongoose = api.shared.DataAccess.mongooseInstance;
 const schema = new mongoose_1.Schema({
-    event: {
+    name: {
         type: String, enum: [
             'm5_closed', 'm15_closed', 'm30_closed', 'h1_closed', 'h4_closed', 'd_closed',
             'm5_line_break_closed', 'm15_line_break_closed', 'm30_line_break_closed', 'h1_line_break_closed',
@@ -52,35 +44,36 @@ const schema = new mongoose_1.Schema({
         ],
     },
     isDispatched: { type: Boolean, default: false },
-    eventTime: { type: Date },
+    time: { type: Date },
     candleTime: { type: Date },
-    candleBid: { type: Number },
-    candleAsk: { type: Number },
-    payload: { type: mongoose_1.Schema.Types.Mixed },
+    bidPrice: { type: Number },
+    askPrice: { type: Number },
+    context: { type: mongoose_1.Schema.Types.Mixed },
 });
 schema.index({ candleTime: 1 }); // schema level ascending index on candleTime
-schema.statics.findUndispatchedEvents = (model) => __awaiter(this, void 0, void 0, function* () {
+schema.statics.findUndispatchedEvents = async (model) => {
     return model
         .find({ isDispatched: false })
         .sort({ candleTime: 1 })
         .exec();
-});
-schema.statics.findLastEvent = (model) => __awaiter(this, void 0, void 0, function* () {
+};
+schema.statics.findLastEvent = async (model) => {
     return model
         .findOne()
         .sort({ candleTime: -1 })
         .exec();
-});
-schema.statics.findEventsByTimeEvents = (model, time, events) => __awaiter(this, void 0, void 0, function* () {
+};
+schema.statics.findEventsByTimeEvents = async (model, time, names) => {
     return model
+        // tslint:disable-next-line:object-literal-key-quotes
         .find({
         candleTime: { $gt: time },
-        event: { $in: events },
+        name: { $in: names },
     })
         .sort({ candleTime: 1 })
         .limit(250)
         .exec();
-});
+};
 exports.gbpUsdEvents = mongoose.model('gbp_usd_events', schema);
 exports.audUsdEvents = mongoose.model('aud_usd_events', schema);
 exports.eurUsdEvents = mongoose.model('eur_usd_events', schema);

@@ -57,8 +57,6 @@ schema.statics.findLimit = async (
         .limit(limit)
         .exec();
 };
-export class LineBreaks { // they work only on daily basis
-    public static audUsd = mongoose.model<LineBreakDocument>('aud-usd-line-break', schema) as LineBreakModel;
-    public static gbpUsd = mongoose.model<LineBreakDocument>('gbp-usd-line-break', schema) as LineBreakModel;
-    public static eurUsd = mongoose.model<LineBreakDocument>('eur-usd-line-break', schema) as LineBreakModel;
-}
+export let audUsdLineBreaksModel = mongoose.model<LineBreakDocument>('aud_usd_line_breaks', schema) as LineBreakModel;
+export let gbpUsdLineBreaksModel = mongoose.model<LineBreakDocument>('gbp_usd_line_breaks', schema) as LineBreakModel;
+export let eurUsdLineBreaksModel = mongoose.model<LineBreakDocument>('eur_usd_line_breaks', schema) as LineBreakModel;

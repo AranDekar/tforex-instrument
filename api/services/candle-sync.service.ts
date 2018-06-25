@@ -51,7 +51,7 @@ export class CandleSyncService {
         const completedCandles = allCandles.filter((x) => x.complete);
         const sortedCompletedCandles = completedCandles.sort((a, b) => a.time - b.time);
 
-        await candleModel.create(sortedCompletedCandles);
+        await candleModel.collection.insertMany(sortedCompletedCandles);
 
         // for (const candle of allCandles.sort((a, b) => a.time - b.time)) {
         //     if (candle.complete) {
@@ -73,43 +73,46 @@ export class CandleSyncService {
             switch (granularity) {
                 case api.enums.GranularityEnum.M5:
                     if (!this.endTime) {
-                        // startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 1, 0);
-                        startTime = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() - 1);
+                        startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 1, 0);
+                        // startTime = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() - 1);
                         // 1 months data for M5
                     }
                     break;
                 case api.enums.GranularityEnum.M15:
                     if (!this.endTime) {
-                        // startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 3, 0);
-                        startTime = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() - 3);
+                        startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 3, 0);
+                        // startTime = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() - 3);
                         // 3 months data for M15
                     }
                     break;
                 case api.enums.GranularityEnum.M30:
                     if (!this.endTime) {
-                        // startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 6, 0);
-                        startTime = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() - 6);
+                        startTime = new Date(startTime.getFullYear(), startTime.getMonth() - 6, 0);
+                        // startTime = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() - 6);
                         // 6 months data for M30
                     }
                     break;
                 case api.enums.GranularityEnum.H1:
                     if (!this.endTime) {
-                        // startTime = new Date(startTime.getFullYear() - 1, startTime.getMonth(), 0);
-                        startTime = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() - 12);
+                        startTime = new Date(startTime.getFullYear() - 1, startTime.getMonth(), 0);
+                        // startTime = new Date(startTime.getFullYear(), startTime.getMonth(),
+                        // startTime.getDate() - 12);
                         // 1 year data for H1
                     }
                     break;
                 case api.enums.GranularityEnum.H4:
                     if (!this.endTime) {
-                        // startTime = new Date(startTime.getFullYear() - 4, startTime.getMonth(), 0);
-                        startTime = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() - 48);
+                        startTime = new Date(startTime.getFullYear() - 4, startTime.getMonth(), 0);
+                        // startTime = new Date(startTime.getFullYear(), startTime.getMonth(),
+                        // startTime.getDate() - 48);
                         // 4 years data for H4
                     }
                     break;
                 case api.enums.GranularityEnum.D:
                     if (!this.endTime) {
-                        // startTime = new Date(startTime.getFullYear() - 10, startTime.getMonth(), 0);
-                        startTime = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() - 288);
+                        startTime = new Date(startTime.getFullYear() - 10, startTime.getMonth(), 0);
+                        // startTime = new Date(startTime.getFullYear(), startTime.getMonth(),
+                        // startTime.getDate() - 288);
                         // 10 years data for D1
                     }
                     break;

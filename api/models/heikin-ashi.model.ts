@@ -58,8 +58,9 @@ schema.statics.findLimit = async (
         .exec();
 };
 
-export class HeikinAshis { // they work only on daily basis
-    public static audUsd = mongoose.model<HeikinAshiDocument>('aud-usd-heikin-ashi', schema) as HeikinAshiModel;
-    public static gbpUsd = mongoose.model<HeikinAshiDocument>('gbp-usd-heikin-ashi', schema) as HeikinAshiModel;
-    public static eurUsd = mongoose.model<HeikinAshiDocument>('eur-usd-heikin-ashi', schema) as HeikinAshiModel;
-}
+export let audUsdHeikinAshisModel =
+    mongoose.model<HeikinAshiDocument>('aud_usd_heikin_ashis', schema) as HeikinAshiModel;
+export let gbpUsdHeikinAshisModel =
+    mongoose.model<HeikinAshiDocument>('gbp_usd_heikin_ashis', schema) as HeikinAshiModel;
+export let eurUsdHeikinAshisModel =
+    mongoose.model<HeikinAshiDocument>('eur_usd_heikin_ashis', schema) as HeikinAshiModel;

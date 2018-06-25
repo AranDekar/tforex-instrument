@@ -57,33 +57,33 @@ export class CandleService {
         api.models.CandleModel {
         switch (instrument) {
             case api.enums.InstrumentEnum.AUD_USD:
-                return api.models.Candles.audUsd;
+                return api.models.audUsdCandlesModel;
             case api.enums.InstrumentEnum.GBP_USD:
-                return api.models.Candles.gbpUsd;
+                return api.models.gbpUsdCandlesModel;
             case api.enums.InstrumentEnum.EUR_USD:
-                return api.models.Candles.eurUsd;
+                return api.models.eurUsdCandlesModel;
         }
         throw new Error(`CandleModel is undefined for ${instrument}`);
     }
     public getHeikinAshiModel(instrument: api.enums.InstrumentEnum): api.models.HeikinAshiModel {
         switch (instrument) {
             case api.enums.InstrumentEnum.AUD_USD:
-                return api.models.HeikinAshis.audUsd;
+                return api.models.audUsdHeikinAshisModel;
             case api.enums.InstrumentEnum.GBP_USD:
-                return api.models.HeikinAshis.gbpUsd;
+                return api.models.gbpUsdHeikinAshisModel;
             case api.enums.InstrumentEnum.EUR_USD:
-                return api.models.HeikinAshis.eurUsd;
+                return api.models.eurUsdHeikinAshisModel;
         }
         throw new Error(`HeikinAshiModel is undefined for ${instrument}`);
     }
     public getLineBreakModel(instrument: api.enums.InstrumentEnum): api.models.LineBreakModel {
         switch (instrument) {
             case api.enums.InstrumentEnum.AUD_USD:
-                return api.models.LineBreaks.audUsd;
+                return api.models.audUsdLineBreaksModel;
             case api.enums.InstrumentEnum.GBP_USD:
-                return api.models.LineBreaks.gbpUsd;
+                return api.models.gbpUsdLineBreaksModel;
             case api.enums.InstrumentEnum.EUR_USD:
-                return api.models.LineBreaks.eurUsd;
+                return api.models.eurUsdLineBreaksModel;
         }
         throw new Error(`HeikinAshiModel is undefined for ${instrument}`);
     }

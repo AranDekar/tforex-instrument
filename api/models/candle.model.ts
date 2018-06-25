@@ -86,8 +86,6 @@ schema.statics.findLimit = async (
         .exec();
 };
 
-export class Candles {
-    public static audUsd = mongoose.model<CandleDocument>('aud-usd-candles', schema) as CandleModel;
-    public static gbpUsd = mongoose.model<CandleDocument>('gbp-usd-candles', schema) as CandleModel;
-    public static eurUsd = mongoose.model<CandleDocument>('eur-usd-candles', schema) as CandleModel;
-}
+export let audUsdCandlesModel = mongoose.model<CandleDocument>('aud_usd_candles', schema) as CandleModel;
+export let gbpUsdCandlesModel = mongoose.model<CandleDocument>('gbp_usd_candles', schema) as CandleModel;
+export let eurUsdCandlesModel = mongoose.model<CandleDocument>('eur_usd_candles', schema) as CandleModel;
